@@ -1,4 +1,4 @@
-import {pdfWithPlan,pngWithPlan,saveFile} from './files.js?v=4';
+import {pdfWithPlan,pngWithPlan,saveFile} from './files.js?v=11';
 const enc=new TextEncoder();
 export function jpegPdf(images,width=1240,height=1754){
  const chunks=[],offsets=[0];let size=0;const put=data=>{const bytes=typeof data==='string'?enc.encode(data):data;chunks.push(bytes);size+=bytes.length;};const object=(id,body)=>{offsets[id]=size;put(`${id} 0 obj\n`);put(body);put('\nendobj\n');};

@@ -1,4 +1,4 @@
-import {clean,DEFAULTS} from './engine.js?v=4';
+import {clean,DEFAULTS} from './engine.js?v=11';
 const utf=new TextEncoder(),decode=new TextDecoder();
 export const payload=s=>({app:'MUJ-DIP',version:1,settings:clean(s)});
 export function validate(data){if(data?.app!=='MUJ-DIP'||data.version!==1||!data.settings||Array.isArray(data.settings))throw Error('Soubor neobsahuje platný plán MŮJ-DIP.');for(const k of Object.keys(DEFAULTS)){const v=data.settings[k];if(k==='mode'?!['gross','budget'].includes(v):v===null||v===''||!Number.isFinite(Number(v)))throw Error('V plánu chybí platná hodnota: '+k);}return clean(data.settings);}

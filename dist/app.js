@@ -1,5 +1,5 @@
-import {excelBytes,importPlan,saveFile,payload} from './files.js?v=4';
-import {calculate,clean,DEFAULTS} from './engine.js?v=4';
+import {excelBytes,importPlan,saveFile,payload} from './files.js?v=11';
+import {calculate,clean,DEFAULTS} from './engine.js?v=11';
 const $=id=>document.getElementById(id),money=new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:0}),fmt=n=>money.format(n)+' Kč',num=n=>money.format(n),pct=n=>new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:8}).format(n*100)+' %';
 let state={...DEFAULTS},result,timer;const storageKey='muj-dip-plan-v1';
 function toast(text){$('toast').textContent=text;$('toast').classList.add('show');clearTimeout(timer);timer=setTimeout(()=>$('toast').classList.remove('show'),3500);}
@@ -29,12 +29,12 @@ for(const el of document.querySelectorAll('[data-key]')){const handler=()=>{if(e
 for(const b of document.querySelectorAll('[data-own]'))b.addEventListener('click',()=>{state.own=Number(b.dataset.own);sync();render();});
 function download(name,text,type){const url=URL.createObjectURL(new Blob([text],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 $('save').addEventListener('click',()=>{try{localStorage.setItem(storageKey,JSON.stringify(state));toast('Plán je uložen v tomto prohlížeči.');}catch{toast('Uložení není dostupné. Použijte Export.');}});
-$('export').addEventListener('click',async()=>{const format=$('exportFormat').value;try{toast('Připravuji export…');if(format==='xlsx')saveFile('MUJ-DIP-plan.xlsx',excelBytes(result),'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');else if(format==='json')saveFile('MUJ-DIP-plan.json',JSON.stringify(payload(state),null,2),'application/json');else{const {exportPdf}=await import('./pdf.js?v=4');await exportPdf(result,format);}toast('Export je připraven ke stažení.');}catch(error){toast(error.message||'Export se nepodařilo vytvořit.');}});
+$('export').addEventListener('click',async()=>{const format=$('exportFormat').value;try{toast('Připravuji export…');if(format==='xlsx')saveFile('MUJ-DIP-plan.xlsx',excelBytes(result),'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');else if(format==='json')saveFile('MUJ-DIP-plan.json',JSON.stringify(payload(state),null,2),'application/json');else{const {exportPdf}=await import('./pdf.js?v=11');await exportPdf(result,format);}toast('Export je připraven ke stažení.');}catch(error){toast(error.message||'Export se nepodařilo vytvořit.');}});
 $('import').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{state=await importPlan(file);sync();render();toast('Plán byl načten ze souboru.');}catch(error){toast(error.message||'Soubor nelze načíst.');}finally{e.target.value='';}});
 $('reset').addEventListener('click',()=>{state={...DEFAULTS};sync();render();toast('Obnoven výchozí příklad. Uložený plán zůstává zachován.');});
 $('clear').addEventListener('click',()=>{try{localStorage.removeItem(storageKey);toast('Uložený plán byl vymazán z prohlížeče.');}catch{toast('Úložiště prohlížeče není dostupné.');}});
 $('csv').addEventListener('click',()=>{const rows=[['Rok','Vek','Vlastni vklady Kc','Prispevky firmy Kc','Hodnota DIP Kc','Zhodnoceni Kc','Danova uspora mimo DIP Kc','Hodnota v dnesnich cenach Kc'],...result.points.map(p=>[p.year,state.age+p.year,p.own,p.employer,p.value,p.gain,p.tax,p.real].map(n=>Math.round(n)))];download('muj-dip-vyvoj.csv','\uFEFF'+rows.map(r=>r.join(';')).join('\r\n'),'text/csv;charset=utf-8');});
-$('print').addEventListener('click',async()=>{try{toast('Připravuji PDF přehled…');const {exportPdf}=await import('./pdf.js?v=4');await exportPdf(result);toast('PDF přehled je připraven ke stažení.');}catch{toast('Přímý export selhal. Otevírám tisk — vyberte Uložit jako PDF.');window.print();}});
+$('print').addEventListener('click',async()=>{try{toast('Připravuji PDF přehled…');const {exportPdf}=await import('./pdf.js?v=11');await exportPdf(result);toast('PDF přehled je připraven ke stažení.');}catch{toast('Přímý export selhal. Otevírám tisk — vyberte Uložit jako PDF.');window.print();}});
 try{const saved=localStorage.getItem(storageKey);if(saved)state=clean(JSON.parse(saved));}catch{}sync();render();
 
 const menuToggle=$('menuToggle'),topNav=$('topNav');
