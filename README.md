@@ -6,7 +6,7 @@ Webová aplikace pro modelování dlouhodobého investičního produktu a přís
 
 - Vlastní a firemní příspěvky, sdílené daňové limity.
 - Roční odhad daňové úspory podle parametrů roku 2026.
-- Vývoj investice včetně poplatku a inflace.
+- Vývoj investice bez ročního poplatku, se zohledněním inflace.
 - Porovnání DIP se zvýšením mzdy při stejné hrubé částce nebo stejném nákladu firmy.
 - Místní uložení plánu, import/export JSON, CSV a tisk.
 
@@ -20,6 +20,6 @@ V nastavení GitHub repozitáře otevřete **Settings → Pages → Build and de
 
 ## Výpočet a omezení
 
-Podrobné parametry, pravidla a oficiální zdroje jsou na záložce „Pravidla a výpočty“. Výpočty jsou orientační roční model, nikoli měsíční mzdový systém nebo nabídka konkrétního fondu. Pravidla budoucích let a příjmy se pro ilustraci nemění. Předpokládaný výnos není garantovaný. Výnos je snížen o zadaný roční průběžný poplatek. Vstupní/výstupní poplatky a případné daně uvnitř DIP se nemodelují.
+Podrobné parametry, pravidla a oficiální zdroje jsou na záložce „Pravidla a výpočty“. Výpočty jsou orientační roční model, nikoli měsíční mzdový systém nebo nabídka konkrétního fondu. Pravidla budoucích let a příjmy se pro ilustraci nemění. Předpokládaný výnos není garantovaný. Roční výnos lze přímo zadat do hlavního formuláře. Roční poplatek se neodečítá, ani když starší uložený plán nebo import obsahuje dřívější hodnotu poplatku. Vstupní/výstupní poplatky a případné daně uvnitř DIP se nemodelují.
 
 Vklady a úspory zaměstnavatele nejsou likvidní hotovost pro zaměstnance. Daňová úspora není automaticky reinvestována. Výpočty probíhají v prohlížeči; nastavení se ukládá jen po volbě „Uložit plán“. Zdrojový kód klientské aplikace je přístupný návštěvníkům i čtenářům veřejného repozitáře.
