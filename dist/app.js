@@ -35,3 +35,10 @@ $('clear').addEventListener('click',()=>{try{localStorage.removeItem(storageKey)
 $('csv').addEventListener('click',()=>{const rows=[['Rok','Vek','Vlastni vklady Kc','Prispevky firmy Kc','Hodnota DIP Kc','Zhodnoceni Kc','Danova uspora mimo DIP Kc','Hodnota v dnesnich cenach Kc'],...result.points.map(p=>[p.year,state.age+p.year,p.own,p.employer,p.value,p.gain,p.tax,p.real].map(n=>Math.round(n)))];download('muj-dip-vyvoj.csv','\uFEFF'+rows.map(r=>r.join(';')).join('\r\n'),'text/csv;charset=utf-8');});
 $('print').addEventListener('click',async()=>{try{toast('Připravuji PDF přehled…');const {exportPdf}=await import('./pdf.js?v=4');await exportPdf(result);toast('PDF přehled je připraven ke stažení.');}catch{toast('Přímý export selhal. Otevírám tisk — vyberte Uložit jako PDF.');window.print();}});
 try{const saved=localStorage.getItem(storageKey);if(saved)state=clean(JSON.parse(saved));}catch{}sync();render();
+
+const menuToggle=$('menuToggle'),topNav=$('topNav');
+function closeMenu(){menuToggle.setAttribute('aria-expanded','false');menuToggle.setAttribute('aria-label','Otevřít menu');topNav.classList.remove('menu-open');}
+menuToggle.addEventListener('click',()=>{const open=menuToggle.getAttribute('aria-expanded')!=='true';menuToggle.setAttribute('aria-expanded',String(open));menuToggle.setAttribute('aria-label',open?'Zavřít menu':'Otevřít menu');topNav.classList.toggle('menu-open',open);});
+topNav.addEventListener('click',e=>{if(e.target.closest('[data-tab]'))closeMenu();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&menuToggle.getAttribute('aria-expanded')==='true'){closeMenu();menuToggle.focus();}});
+document.addEventListener('click',e=>{if(!topNav.contains(e.target)&&!menuToggle.contains(e.target))closeMenu();});
