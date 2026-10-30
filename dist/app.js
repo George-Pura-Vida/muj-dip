@@ -1,4 +1,4 @@
-import './comparison.js?v=13';
+import './comparison.js?v=14';
 import {excelBytes,importPlan,saveFile,payload} from './files.js?v=11';
 import {calculate,clean,DEFAULTS} from './engine.js?v=11';
 const $=id=>document.getElementById(id),money=new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:0}),fmt=n=>money.format(n)+' Kč',num=n=>money.format(n),pct=n=>new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:8}).format(n*100)+' %';
