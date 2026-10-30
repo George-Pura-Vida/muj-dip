@@ -14,6 +14,6 @@ export function compare(raw){const s=cleanComparison(raw),eligible=s.years>=10&&
  const dipBase=base-Math.min(available,s.own*12),exitTax=kind==='dps'?(s.payout==='pension'?0:taxableGain*.15):incomeTax(dipBase+taxableGain)-incomeTax(dipBase),net=v-exitTax,taxSaving=annualTax[kind]*year,total=net+taxSaving;
  rows.push({year,value:v,own,employer,state:government,gain:v-paid,entry:entryCosts,management,performance:perf,fees:entryCosts+management+perf,tax:exitTax,net,taxSaving,total,real:total/Math.pow(1+s.inflation/100,year),taxableGain});}
  }return {rows,end:rows.at(-1)};};
- const dip=run('dip'),dps=run('dps');for(let i=0;i<s.years;i++)points.push({year:i+1,dip:dip.rows[i].net,dps:dps.rows[i].net,dipReal:dip.rows[i].net/Math.pow(1+s.inflation/100,i+1),dpsReal:dps.rows[i].net/Math.pow(1+s.inflation/100,i+1)});
+ const dip=run('dip'),dps=run('dps');for(let i=0;i<s.years;i++)points.push({year:i+1,dip:dip.rows[i].total,dps:dps.rows[i].total,dipReal:dip.rows[i].total/Math.pow(1+s.inflation/100,i+1),dpsReal:dps.rows[i].total/Math.pow(1+s.inflation/100,i+1)});
  let loyalty=0,previousManagement=0;for(const row of dps.rows){loyalty*=1+Math.max(0,s.loyaltyRate)/100;if(s.age+row.year<=65)loyalty+=(row.management-previousManagement)*.25;previousManagement=row.management;}
  return {s,dip,dps,points,annualTax,support,eligible,excess,loyalty:s.loyalty&&!s.netReturns?loyalty:0,loyaltyEligible:eligible&&s.age+s.years>=65,difference:dip.end.total-dps.end.total};}
