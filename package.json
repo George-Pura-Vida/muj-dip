@@ -1,1 +1,8 @@
-{"name":"muj-dip","private":true,"type":"module","scripts":{"test":"node --test tests.mjs formats.test.mjs"}}
+{
+  "name": "muj-dip",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests.mjs formats.test.mjs comparison.test.mjs"
+  }
+}
