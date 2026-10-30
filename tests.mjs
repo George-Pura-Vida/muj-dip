@@ -1,0 +1,8 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {calculate,DEFAULTS} from './dist/engine.js';
+const close=(a,b)=>assert.ok(Math.abs(a-b)<.01,`${a} != ${b}`);
+test('běžný příspěvek: 60 lidí, 3000 Kč',()=>{const r=calculate(DEFAULTS);close(r.companySaving,12168);close(r.employeeDifference,9576);close(r.personalTax,7200);close(r.wageNet,26424);close(r.dipCost,36000);});
+test('sdílené limity a přesah',()=>{const r=calculate({...DEFAULTS,employer:5000,otherEmployer:10000,otherOwn:40000});close(r.exempt,40000);close(r.taxable,20000);close(r.allowance,8000);close(r.personalTax,1200);assert.ok(r.dipTaxCost>0);});
+test('nulové vklady, sazba a výnos',()=>{let r=calculate({...DEFAULTS,own:0,employer:0,initial:1000,rate:0,fee:0});close(r.end.value,1000);close(r.companySaving,0);close(r.personalTax,0);r=calculate({...DEFAULTS,rate:0,fee:0});close(r.end.value,1680000);});
+test('stejný rozpočet firmy a vysoká mzda',()=>{for(const salary of [35000,146900,150000,200000,300000]){const r=calculate({...DEFAULTS,salary,mode:'budget'});close(r.wageCost,r.dipCost);assert.ok(r.raise<=r.dipCost);}});
+test('sleva na dani omezí úsporu, věk a záporný výnos',()=>{const r=calculate({...DEFAULTS,salary:22400,otherOwn:0,own:100000,age:57,years:10,rate:-10});assert.ok(r.personalTax<=7200);assert.equal(r.eligibleAge,67);assert.equal(r.eligible,true);assert.ok(r.end.gain<0);});
+test('vstupy z importu nelze zneužít',()=>{const r=calculate({own:-1,employees:0,years:NaN,age:999,mode:'bad',salary:Infinity});assert.equal(r.s.own,0);assert.equal(r.s.employees,1);assert.equal(r.s.years,20);assert.equal(r.s.age,90);assert.equal(r.s.mode,'gross');});

@@ -1,26 +1,25 @@
-# M�J-DIP
+# MŮJ-DIP
 
-Webov� aplikace pro modelov�n� dlouhodob�ho investi�n�ho produktu a p��sp�vk� zam�stnavatele. Ur�en� pro dom�nu https://muj-dip.jirijanousek.cz.
+Webová aplikace pro modelování dlouhodobého investičního produktu a příspěvků zaměstnavatele. Určená pro doménu https://muj-dip.jirijanousek.cz.
 
 ## Funkce
 
-- Vlastn� a firemn� p��sp�vky, sd�len� da�ov� limity.
-- Ro�n� odhad da�ov� �spory podle parametr� roku 2026.
-- V�voj investice v�etn� poplatku a inflace.
-- Porovn�n� DIP se zv��en�m mzdy p�i stejn� hrub� ��stce nebo stejn�m n�kladu firmy.
-- M�stn� ulo�en� pl�nu, import/export JSON, CSV a tisk.
+- Vlastní a firemní příspěvky, sdílené daňové limity.
+- Roční odhad daňové úspory podle parametrů roku 2026.
+- Vývoj investice včetně poplatku a inflace.
+- Porovnání DIP se zvýšením mzdy při stejné hrubé částce nebo stejném nákladu firmy.
+- Místní uložení plánu, import/export JSON, CSV a tisk.
 
-## Spu�t�n� a ov��en�
+## Spuštění a ověření
 
-Sta�� libovoln� statick� HTTP server nad slo�kou `dist`. Aplikace nem� extern� z�vislosti ani build krok. Testy: `node --test tests.mjs` (Node.js 22+).
+Stačí libovolný statický HTTP server nad složkou `dist`. Aplikace nemá externí závislosti ani build krok. Testy: `node --test tests.mjs` (Node.js 22+).
 
-## Publikov�n�
+## Publikování
 
-V nastaven� GitHub repozit��e otev�ete **Settings  Pages  Build and deployment  Source  GitHub Actions**. Workflow p�i zm�n� v�tve `main` ov��� v�po�ty a publikuje slo�ku `dist`. V **Custom domain** nastavte `muj-dip.jirijanousek.cz` a v DNS nasm�rujte CNAME `muj-dip` na `george-pura-vida.github.io`. Po ov��en� certifik�tu zapn�te HTTPS.
+V nastavení GitHub repozitáře otevřete **Settings → Pages → Build and deployment → Source → GitHub Actions**. Workflow při změně větve `main` ověří výpočty a publikuje složku `dist`. V **Custom domain** nastavte `muj-dip.jirijanousek.cz` a v DNS nasměrujte CNAME `muj-dip` na `george-pura-vida.github.io`. Po ověření certifikátu zapněte HTTPS.
 
-## V�po�et a omezen�
+## Výpočet a omezení
 
-Podrobn� parametry, pravidla a ofici�ln� zdroje jsou na z�lo�ce "Pravidla a v�po�ty". V�po�ty jsou orienta�n� ro�n� model, nikoli m�s��n� mzdov� syst�m nebo nab�dka konkr�tn�ho fondu. Pravidla budouc�ch let a p��jmy se pro ilustraci nem�n�. P�edpokl�dan� v�nos nen� garantovan�. V�nos je sn��en o zadan� ro�n� pr�bاn� poplatek. Vstupn�/v�stupn� poplatky a p��padn� dan� uvnit� DIP se nemodeluj�.
+Podrobné parametry, pravidla a oficiální zdroje jsou na záložce „Pravidla a výpočty“. Výpočty jsou orientační roční model, nikoli měsíční mzdový systém nebo nabídka konkrétního fondu. Pravidla budoucích let a příjmy se pro ilustraci nemění. Předpokládaný výnos není garantovaný. Výnos je snížen o zadaný roční průběžný poplatek. Vstupní/výstupní poplatky a případné daně uvnitř DIP se nemodelují.
 
-Vklady a �spory zam�stnavatele nejsou likvidn� hotovost pro zam�stnance. Da�ov� �spora nen� automaticky reinvestov�na. V�po�ty prob�haj� v prohl��e�i; nastaven� se ukl�d� jen po volb� "Ulo�it pl�n". Zdrojov� k�d klientsk� aplikace je p��stupn� n�v�t�vn�k�m i �ten���m ve�ejn�ho repozit��e.
-
+Vklady a úspory zaměstnavatele nejsou likvidní hotovost pro zaměstnance. Daňová úspora není automaticky reinvestována. Výpočty probíhají v prohlížeči; nastavení se ukládá jen po volbě „Uložit plán“. Zdrojový kód klientské aplikace je přístupný návštěvníkům i čtenářům veřejného repozitáře.
