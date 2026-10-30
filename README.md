@@ -23,3 +23,7 @@ V nastavení GitHub repozitáře otevřete **Settings → Pages → Build and de
 Podrobné parametry, pravidla a oficiální zdroje jsou na záložce „Pravidla a výpočty“. Výpočty jsou orientační roční model, nikoli měsíční mzdový systém nebo nabídka konkrétního fondu. Pravidla budoucích let a příjmy se pro ilustraci nemění. Předpokládaný výnos není garantovaný. Roční výnos lze přímo zadat do hlavního formuláře. Roční poplatek se neodečítá, ani když starší uložený plán nebo import obsahuje dřívější hodnotu poplatku. Vstupní/výstupní poplatky a případné daně uvnitř DIP se nemodelují.
 
 Vklady a úspory zaměstnavatele nejsou likvidní hotovost pro zaměstnance. Daňová úspora není automaticky reinvestována. Výpočty probíhají v prohlížeči; nastavení se ukládá jen po volbě „Uložit plán“. Zdrojový kód klientské aplikace je přístupný návštěvníkům i čtenářům veřejného repozitáře.
+
+## Formáty souborů
+
+Excel XLSX obsahuje list Plan s editovatelnými vstupy ve sloupci C, list Vyvoj a Prehled s číselnými výsledky ke dni exportu. Po úpravě vstupů v Excelu soubor importujte do aplikace pro přepočet. PDF a PNG obsahují přehled a vložené nastavení plánu pro zpětný import. Import podporuje vlastní exporty MŮJ-DIP a původní JSON plány; nerozpoznává běžné fotografie, screenshoty ani libovolné cizí sešity a PDF. Limit importu je 20 MB.
