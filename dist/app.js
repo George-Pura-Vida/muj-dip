@@ -1,8 +1,8 @@
-import './comparison.js?v=24';
+import './comparison.js?v=25';
 import {excelBytes,importPlan,saveFile,payload} from './files.js?v=24';
 import {calculate,clean,DEFAULTS} from './engine.js?v=24';
 const $=id=>document.getElementById(id),money=new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:0}),fmt=n=>money.format(n)+' Kč',num=n=>money.format(n),pct=n=>new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:8}).format(n*100)+' %';
-let state={...DEFAULTS},result,timer;const storageKey='muj-dip-plan-v1';
+let state={...DEFAULTS},result,timer;const storageKey='muj-dip-plan-v1-'+(document.body.dataset.accountKey||'public');
 function toast(text){$('toast').textContent=text;$('toast').classList.add('show');clearTimeout(timer);timer=setTimeout(()=>$('toast').classList.remove('show'),3500);}
 function sync(){for(const el of document.querySelectorAll('[data-key]'))el.value=state[el.dataset.key];}
 function setText(id,text){$(id).textContent=text;}
@@ -49,5 +49,6 @@ const advancedToggle=$('advancedToggle'),advancedSettings=$('advancedSettings');
 advancedToggle.addEventListener('click',()=>{const open=advancedToggle.getAttribute('aria-expanded')!=='true';advancedToggle.setAttribute('aria-expanded',String(open));advancedSettings.hidden=!open;advancedToggle.querySelector('span').textContent=open?'−':'＋';});
 
 document.querySelector('label.import').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('import').click();}});
-const compactMenu=window.matchMedia('(max-width:1279px)');compactMenu.addEventListener('change',closeMenu);
+const compactMenu=window.matchMedia('(max-width:1439px)');compactMenu.addEventListener('change',closeMenu);
 let lastChartWidth=0;new ResizeObserver(entries=>{const width=Math.round(entries[0].contentRect.width);if(width>0&&width!==lastChartWidth){lastChartWidth=width;if(result)drawChart(result);}}).observe($('chart'));
+
