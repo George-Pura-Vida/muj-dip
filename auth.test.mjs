@@ -56,7 +56,7 @@ try{
  const pending=await a.request('/account.php?view=login',{action:'login',email:profile.email,password});
  ok(pending.status===200&&pending.html.includes('čeká na schválení'));
  ok((await a.request('/')).status===303);
- const admin=new Client();const adminProfile={...profile,email:'jgjjanousek@gmail.com',first_name:'Správce'};
+ const admin=new Client();const adminProfile={...profile,email:'jgjanousek@gmail.com',first_name:'Správce'};
  await admin.request('/account.php?view=register');
  ok((await admin.request('/account.php?view=register',{action:'register',...adminProfile,password,password_confirm:password,privacy:'yes'})).status===303);
  await admin.request('/account.php?view=login');ok((await admin.request('/account.php?view=login',{action:'login',email:adminProfile.email,password})).status===200);

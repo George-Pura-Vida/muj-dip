@@ -2,7 +2,7 @@
 declare(strict_types=1);
 // This directory is denied by Apache; public entry points explicitly include this file.
 const AUTH_ORIGIN = 'https://muj-dip.jirijanousek.cz';
-const AUTH_APPROVER_EMAIL = 'jgjjanousek@gmail.com';
+const AUTH_APPROVER_EMAIL = 'jgjanousek@gmail.com';
 const AUTH_IDLE = 1800;
 const AUTH_ABSOLUTE = 43200;
 
