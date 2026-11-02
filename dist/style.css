@@ -97,3 +97,11 @@ header nav .menu-pages #print.menu-pdf{justify-content:flex-start;gap:9px}
 .pdf-status a:hover{background:#f6e6bf}
 @media(max-width:1439px){header #topNav .menu-pages #print.menu-pdf{grid-column:1/-1;order:1;justify-content:center;min-height:54px}}
 @media print{.pdf-status{display:none!important}}
+
+/* File tools are available with the storage explanation, outside navigation. */
+.plan-file-tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:20px 0}
+.plan-file-tools .menu-section-label{display:none}
+.plan-file-tools button,.plan-file-tools .import{display:inline-flex;align-items:center;gap:8px;border:1px solid #dac89f;border-radius:9px;min-height:44px;padding:9px 13px;background:#fff8e9;color:#49391d;font-size:13px}
+.plan-file-tools .format-label{display:flex;align-items:center;gap:10px;font-size:13px;margin:0}
+.plan-file-tools select{width:160px;margin:0;font-size:13px}
+@media(max-width:600px){.plan-file-tools{display:grid;grid-template-columns:1fr 1fr}.plan-file-tools .format-label{grid-column:1/-1;justify-content:space-between}.plan-file-tools .import input{display:none}.plan-file-tools #reset{grid-column:1/-1}}
