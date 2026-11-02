@@ -18,5 +18,15 @@ export function pdfWithPlan(bytes,s){return join([bytes,utf.encode('\n%MUJ-DIP:'
 function be(n){return new Uint8Array([n>>>24&255,n>>>16&255,n>>>8&255,n&255]);}
 export function pngWithPlan(bytes,s){const type=utf.encode('tEXt'),data=utf.encode('MUJ-DIP\0'+encodePlan(s)),chunk=join([be(data.length),type,data,be(crc32(join([type,data])))]);return join([bytes.slice(0,-12),chunk,bytes.slice(-12)]);}
 export async function importPlan(file){if(file.size>20000000)throw Error('Soubor je příliš velký (maximum 20 MB).');const bytes=new Uint8Array(await file.arrayBuffer()),name=file.name.toLowerCase();if(name.endsWith('.xlsx'))return readExcel(bytes);if(name.endsWith('.pdf')){const match=decode.decode(bytes.slice(-50000)).match(/%MUJ-DIP:([A-Za-z0-9+/=]+)/);if(!match)throw Error('Toto PDF nemá uložený plán. Importujte PDF exportované z MŮJ-DIP.');return decodePlan(match[1]);}if(name.endsWith('.png')){if(bytes.length<20||bytes[0]!==137||decode.decode(bytes.slice(1,4))!=='PNG')throw Error('Neplatný obrázek PNG.');const v=new DataView(bytes.buffer);let pos=8;while(pos+12<=bytes.length){const size=v.getUint32(pos);if(pos+12+size>bytes.length)throw Error('Poškozený PNG.');if(decode.decode(bytes.slice(pos+4,pos+8))==='tEXt'){const text=decode.decode(bytes.slice(pos+8,pos+8+size));if(text.startsWith('MUJ-DIP\0')){if(crc32(bytes.slice(pos+4,pos+8+size))!==v.getUint32(pos+8+size))throw Error('Poškozená data plánu.');return decodePlan(text.slice(8));}}pos+=12+size;}throw Error('Obrázek neobsahuje plán. Použijte původní PNG export z MŮJ-DIP, nikoli snímek obrazovky.');}if(name.endsWith('.json'))return validate(JSON.parse(decode.decode(bytes)));throw Error('Vyberte Excel XLSX, PDF, PNG nebo JSON z MŮJ-DIP.');}
-export function saveFile(name,bytes,type){const url=URL.createObjectURL(new Blob([bytes],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);}
+let previousDownloadUrl=null;
+export function saveFile(name,bytes,type){
+ const url=URL.createObjectURL(new Blob([bytes],{type})),a=document.createElement('a');
+ a.href=url;a.download=name;a.hidden=true;document.body.append(a);
+ // Keep the URL usable for a real user click when a mobile browser blocks automatic saving.
+ document.dispatchEvent(new CustomEvent('mujdip:file-ready',{detail:{url,name,type}}));
+ try{a.click();}catch{}finally{a.remove();}
+ if(previousDownloadUrl)URL.revokeObjectURL(previousDownloadUrl);
+ previousDownloadUrl=url;
+ return url;
+}
 

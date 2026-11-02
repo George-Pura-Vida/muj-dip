@@ -1,6 +1,7 @@
-import './comparison.js?v=31';
+import {exportPdf} from './pdf.js?v=28';
+import './comparison.js?v=32';
 import './guide.js?v=30';
-import {excelBytes,importPlan,saveFile,payload} from './files.js?v=27';
+import {excelBytes,importPlan,saveFile,payload} from './files.js?v=28';
 import {calculate,clean,DEFAULTS} from './engine.js?v=27';
 const $=id=>document.getElementById(id),money=new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:0}),fmt=n=>money.format(n)+' Kč',num=n=>money.format(n),pct=n=>new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:8}).format(n*100)+' %';
 let state={...DEFAULTS},result,timer;const storageKey='muj-dip-plan-v1-'+(document.body.dataset.accountKey||'public');
@@ -32,12 +33,23 @@ for(const el of document.querySelectorAll('[data-key]')){const handler=()=>{if(e
 for(const b of document.querySelectorAll('[data-own]'))b.addEventListener('click',()=>{state.own=Number(b.dataset.own);sync();render();});
 function download(name,text,type){const url=URL.createObjectURL(new Blob([text],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 $('save').addEventListener('click',()=>{try{localStorage.setItem(storageKey,JSON.stringify(state));toast('Plán je uložen v tomto prohlížeči.');}catch{toast('Uložení není dostupné. Použijte Export.');}});
-$('export').addEventListener('click',async()=>{const format=$('exportFormat').value;try{toast('Připravuji export…');if(format==='xlsx')saveFile('MUJ-DIP-plan.xlsx',excelBytes(result),'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');else if(format==='json')saveFile('MUJ-DIP-plan.json',JSON.stringify(payload(state),null,2),'application/json');else{const {exportPdf}=await import('./pdf.js?v=27');await exportPdf(result,format);}toast('Export je připraven ke stažení.');}catch(error){toast(error.message||'Export se nepodařilo vytvořit.');}});
+$('export').addEventListener('click',async()=>{const format=$('exportFormat').value;try{toast('Připravuji export…');if(format==='xlsx')saveFile('MUJ-DIP-plan.xlsx',excelBytes(result),'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');else if(format==='json')saveFile('MUJ-DIP-plan.json',JSON.stringify(payload(state),null,2),'application/json');else{await exportPdf(result,format);}toast('Export je připraven ke stažení.');}catch(error){toast(error.message||'Export se nepodařilo vytvořit.');}});
 $('import').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{state=await importPlan(file);sync();render();toast('Plán byl načten ze souboru.');}catch(error){toast(error.message||'Soubor nelze načíst.');}finally{e.target.value='';}});
 $('reset').addEventListener('click',()=>{state={...DEFAULTS};sync();render();toast('Obnoven výchozí příklad. Uložený plán zůstává zachován.');});
 $('clear').addEventListener('click',()=>{try{localStorage.removeItem(storageKey);toast('Uložený plán byl vymazán z prohlížeče.');}catch{toast('Úložiště prohlížeče není dostupné.');}});
 $('csv').addEventListener('click',()=>{const rows=[['Rok','Vek','Vlastni vklady Kc','Prispevky firmy Kc','Hodnota DIP Kc','Zhodnoceni Kc','Danova uspora mimo DIP Kc','Hodnota v dnesnich cenach Kc'],...result.points.map(p=>[p.year,state.age+p.year,p.own,p.employer,p.value,p.gain,p.tax,p.real].map(n=>Math.round(n)))];download('muj-dip-vyvoj.csv','\uFEFF'+rows.map(r=>r.join(';')).join('\r\n'),'text/csv;charset=utf-8');});
-$('print').addEventListener('click',async()=>{try{toast('Připravuji PDF přehled…');const {exportPdf}=await import('./pdf.js?v=27');await exportPdf(result);toast('PDF přehled je připraven ke stažení.');}catch{toast('Přímý export selhal. Otevírám tisk — vyberte Uložit jako PDF.');window.print();}});
+$('print').addEventListener('click',async()=>{try{toast('Připravuji PDF přehled…');await exportPdf(result);toast('PDF je připravené. Pokud se nestáhlo, použijte odkaz na stránce.');}catch{toast('Přímý export selhal. Otevírám tisk — vyberte Uložit jako PDF.');window.print();}});
+document.addEventListener('mujdip:file-ready',event=>{
+ const box=$('pdfStatus'),file=event.detail;
+ if(!box)return;
+ box.replaceChildren();box.hidden=file.type!=='application/pdf';
+ if(box.hidden)return;
+ const symbol=document.createElement('span');symbol.className='ui-icon ui-coral';symbol.setAttribute('aria-hidden','true');symbol.textContent='📄';
+ const message=document.createElement('span');message.textContent='PDF je připravené.';
+ const download=document.createElement('a');download.href=file.url;download.download=file.name;download.textContent='Stáhnout PDF';
+ const open=document.createElement('a');open.href=file.url;open.target='_blank';open.rel='noopener';open.textContent='Otevřít PDF';
+ box.append(symbol,message,download,open);
+});
 try{const saved=localStorage.getItem(storageKey);if(saved)state=clean(JSON.parse(saved));}catch{}sync();render();
 
 const menuToggle=$('menuToggle'),topNav=$('topNav');

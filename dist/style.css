@@ -89,3 +89,11 @@ header nav .nav-logout .nav{width:100%;border-color:#e0ddd6;color:#685d4d;backgr
 @media(max-width:600px){.quick-start{gap:8px;margin-bottom:20px}.quick-start li{padding:12px 8px;flex-direction:column;text-align:center;gap:8px}.quick-start strong{font-size:11px}.quick-start small{font-size:10px}.quick-start .ui-icon{width:34px;height:34px;font-size:21px}.icon-heading .ui-icon{width:32px;height:32px;font-size:20px}.icon-heading{gap:9px}header #topNav .menu-pages .nav{font-size:13px;padding:10px;gap:8px}}
 @media(max-width:359px){header #topNav .menu-pages{grid-template-columns:1fr}.quick-start{grid-template-columns:1fr}.quick-start li{flex-direction:row;text-align:left;padding:10px 12px}.quick-start strong{font-size:12px}.quick-start small{font-size:11px}}
 @media print{.quick-start{display:none}.ui-icon{display:none}.icon-heading{display:block}header nav .menu-files{display:none}}
+
+/* PDF is a direct destination; secondary file formats stay in the file drawer. */
+header nav .menu-pages #print.menu-pdf{justify-content:flex-start;gap:9px}
+.pdf-status{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:20px 0 0;padding:14px 18px;background:#fff9ed;border:1px solid #d6b875;border-radius:12px;font-size:14px;color:#49391d}
+.pdf-status a{display:inline-flex;align-items:center;min-height:42px;padding:8px 13px;border:1px solid #c5a05b;border-radius:8px;background:#fff;color:#49391d;font-weight:600;text-decoration:none}
+.pdf-status a:hover{background:#f6e6bf}
+@media(max-width:1439px){header #topNav .menu-pages #print.menu-pdf{grid-column:1/-1;order:1;justify-content:center;min-height:54px}}
+@media print{.pdf-status{display:none!important}}
