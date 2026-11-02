@@ -2,6 +2,10 @@
 const fsSource='https://financnisprava.gov.cz/cs/dane/dane/dan-z-prijmu/zamestnanci-zamestnavatele/obecne-informace';
 const mfSource='https://mf.gov.cz/cs/financni-trh/ochrana-spotrebitele/aktuality/2024/dlouhodoby-investicni-produkt-a-danova-podpora-pro-54732';
 const tips={
+ stress:['Krizový scénář','Zapnutím nahradíte v jednom roce běžný výnos krizovou sazbou. Rozdílné poklesy jsou vaše předpoklady, nikoli důkaz, že jeden produkt musí vyhrát.'],
+ shockYear:['Načasování krize','Zadejte rok od založení, například 20 pro propad před výběrem po 20 letech. Vklady po celou dobu pokračují. Stejná procentní ztráta může mít jiný dopad na počátku a na konci spoření.'],
+ dipShock:['Krizový výnos DIP','Celkový výnos portfolia za zvolený rok, například −15 %. Nahradí běžný výnos; není k němu přičten. Může být stejně špatný nebo horší než DPS. Nejde o maximální možnou ztrátu Permanentního portfolia.'],
+ dpsShock:['Krizový výnos DPS','Celkový výnos akciové strategie za zvolený rok, například −35 %. Jde jen o ilustraci, nikoli historický údaj ani předpověď. DPS neznamená automaticky S&P 500 a ne každý DPS tento index kopíruje.'],
  own:['Vlastní měsíční vklad','Zadejte pouze peníze, které vkládáte vy. Příspěvek firmy vyplňte zvlášť. V DIP lze vlastní vklady odečíst do zbývajícího společného limitu 48 000 Kč ročně; vyšší vklad je možný. Příklad: 2 000 Kč měsíčně znamená 24 000 Kč vlastních vkladů za rok. U DPS bez přiznaného starobního důchodu je odpočet jen z vlastních plateb nad 1 700 Kč měsíčně; nejde o celý vklad.',mfSource],
  employer:['Příspěvek zaměstnavatele','Zadejte měsíční příspěvek firmy na jednu osobu, nikoli za celý tým. Osvobození se posuzuje do 50 000 Kč ročně od téhož zaměstnavatele společně s jeho ostatními příspěvky na podporované produkty. Nejde o měsíční strop ani limit samotné investice. Přesah může podléhat dani a pojistnému.',fsSource],
  age:['Věk při založení','Zadejte aktuální věk pro model nově založeného produktu. Model nezohledňuje dřívější trvání existující smlouvy ani přesné datum narození. Věk a doba investování společně ovlivňují upozornění na řádný výběr.',fsSource],
@@ -66,14 +70,14 @@ function show(entry,steps=null,index=0){
  bubble.hidden=false;entry.label.classList.add('guide-active');entry.button.setAttribute('aria-expanded','true');entry.input.setAttribute('aria-describedby',body.id);
  entry.label.scrollIntoView({block:'center',behavior:'instant'});if(tour)entry.input.focus({preventScroll:true});position();
 }
-close.onclick=()=>finish();prev.onclick=()=>{if(tour&&tour.index>0)show(tour.steps[tour.index-1],tour.steps,tour.index-1);};
-next.onclick=()=>{if(!tour)return;if(!current.input.checkValidity()){current.input.reportValidity();return;}if(tour.index===tour.steps.length-1){finish();return;}show(tour.steps[tour.index+1],tour.steps,tour.index+1);};
+close.onclick=()=>finish();prev.onclick=()=>{if(!tour)return;let i=tour.index-1;while(i>=0&&tour.steps[i].input.disabled)i--;if(i>=0)show(tour.steps[i],tour.steps,i);};
+next.onclick=()=>{if(!tour)return;if(!current.input.checkValidity()){current.input.reportValidity();return;}let i=tour.index+1;while(i<tour.steps.length&&tour.steps[i].input.disabled)i++;if(i===tour.steps.length){finish();return;}show(tour.steps[i],tour.steps,i);};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!bubble.hidden){e.preventDefault();finish();}});
 document.addEventListener('click',e=>{if(!bubble.hidden&&!tour&&!bubble.contains(e.target)&&!current.label.contains(e.target))finish(false);});
 document.addEventListener('click',e=>{if(e.target.closest('[data-tab]'))finish(false);});
 window.addEventListener('resize',position);window.addEventListener('scroll',position,{passive:true});
 function setup(root,account=false){
- const fields=[...root.querySelectorAll(account?'input[name],textarea[name]':'input[data-key],select[data-key],input[data-cmp],select[data-cmp]')].filter(x=>x.type!=='range'&&x.type!=='hidden'&&x.type!=='checkbox');
+ const fields=[...root.querySelectorAll(account?'input[name],textarea[name]':'input[data-key],select[data-key],input[data-cmp],select[data-cmp]')].filter(x=>x.type!=='range'&&x.type!=='hidden'&&x.type!=='checkbox'&&(!x.closest('.stress-controls')||root.matches('.stress-controls')));
  let count=0;const local=[];
  for(const input of fields){
   const key=account?input.name:input.dataset.key||input.dataset.cmp,tip=(account?accountTips:tips)[key],label=input.closest('label');if(!tip||!label||label.querySelector('.guide-help'))continue;
@@ -87,9 +91,10 @@ function setup(root,account=false){
  }
  if(!local.length)return;
  const toolbar=document.createElement('div');toolbar.className='guide-toolbar';
- const start=document.createElement('button');start.type='button';start.className='guide-start';start.textContent='① Průvodce vyplněním';start.onclick=()=>{opener=start;show(local[0],local);};
+ const start=document.createElement('button');start.type='button';start.className='guide-start';start.textContent=root.matches('.stress-controls')?'① Průvodce scénářem':'① Průvodce vyplněním';start.onclick=()=>{opener=start;show(local[0],local);};
  const hint=document.createElement('p');hint.textContent='Postup krok za krokem. Číslo u pole otevře vysvětlivku. Hodnoty zadáváte sami; průvodce formulář neodesílá.';
  toolbar.append(start,hint);const anchor=account?root.querySelector('form'):root.querySelector('aside.inputs');(anchor||root).prepend(toolbar);
 }
 for(const id of ['plan','company','comparison']){const root=document.getElementById(id);if(root)setup(root);}
+const stressRoot=document.querySelector('.stress-controls');if(stressRoot)setup(stressRoot);
 const account=document.querySelector('.account-card');if(account&&document.querySelector('form'))setup(account,true);

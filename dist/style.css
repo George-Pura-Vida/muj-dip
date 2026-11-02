@@ -47,3 +47,5 @@ header nav .menu-pages #print.menu-pdf{display:inline-flex;align-items:center;ju
 /* Mobile navigation: one hamburger menu instead of a second tab bar. */
 @media screen and (max-width:767px){header #menuToggle{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px}header #topNav:not(.menu-open){display:none}header #topNav.menu-open{display:flex;max-height:calc(100dvh - 88px);overflow-y:auto;overflow-x:hidden}header #topNav .menu-pages{grid-template-columns:minmax(0,1fr)}header #topNav .menu-pages .nav{min-height:46px;width:100%}header #topNav .menu-pages #print.menu-pdf{order:1;grid-column:1/-1}.toolbar{display:none}}
 
+
+.stress-controls{margin-bottom:26px}.stress-controls .two{max-width:860px}.stress-controls .cmp-actions{margin:16px 0}.stress-controls details{margin:16px 0}.stress-controls p{line-height:1.7}
