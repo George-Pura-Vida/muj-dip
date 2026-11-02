@@ -1,4 +1,4 @@
-import './comparison.js?v=27';
+import './comparison.js?v=28';
 import './guide.js?v=27';
 import {excelBytes,importPlan,saveFile,payload} from './files.js?v=27';
 import {calculate,clean,DEFAULTS} from './engine.js?v=27';
