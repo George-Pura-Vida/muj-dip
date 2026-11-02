@@ -31,10 +31,13 @@ try{
  ok((await a.request('/')).status===303);
  ok((await a.request('/index.html')).status===303);
  ok((await a.request('/auth/bootstrap.php')).status===403);
+ for(const legalView of ['terms','privacy','cookies','legal']){const legal=await b.request('/legal.php?view='+legalView);ok(legal.status===200&&legal.html.includes('IČO 13798804')&&legal.html.includes('data-cookie-settings'));}
+ const legacyPrivacy=await b.request('/account.php?view=privacy');ok(legacyPrivacy.location==='/legal.php?view=privacy');
  const registration=await a.request('/account.php?view=register');
  ok(registration.headers.get('referrer-policy')==='same-origin');
  ok(registration.html.includes('name="referrer" content="same-origin"'));
  ok(registration.html.includes('minlength="7"'));
+ ok(registration.html.includes('/privacy.js?v=1')&&registration.html.includes('Podmínky používání')&&registration.html.includes('Ochrana údajů / GDPR'));
  ok(registration.html.includes('Aktivace přístupu má dva kroky:')&&registration.html.includes('Z bezpečnostních důvodů poté vyčkejte'));
  const loginNotice=await a.request('/account.php?view=login');ok(loginNotice.html.includes('Z bezpečnostních důvodů není účet aktivován automaticky.'));
  const ownerNotice=await a.request('/account.php?view=register');

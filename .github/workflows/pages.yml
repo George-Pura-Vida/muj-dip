@@ -18,6 +18,6 @@ jobs:
           node-version: '22'
       - run: npm test
       - run: node --check dist/app.js && node --check dist/comparison.js
-      - run: php -l dist/auth/bootstrap.php && php -l dist/account.php && php -l dist/index.php
+      - run: php -l dist/auth/bootstrap.php && php -l dist/account.php && php -l dist/index.php && php -l dist/legal.php
       - run: node auth.test.mjs
       - run: node --test approval-migration.test.mjs
