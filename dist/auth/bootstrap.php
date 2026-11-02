@@ -40,7 +40,9 @@ function auth_headers(): void {
     header('Cache-Control: private, no-store, max-age=0');
     header('Pragma: no-cache'); header('Vary: Cookie');
     header('X-Content-Type-Options: nosniff'); header('X-Frame-Options: DENY');
-    header('Referrer-Policy: no-referrer');
+    // Native POST forms use an opaque Origin under no-referrer; keep the real
+    // origin on this site while suppressing referrers to other sites.
+    header('Referrer-Policy: same-origin');
     header("Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self' https://jirijanousek.cz");
 }
 function auth_boot(): void {
@@ -111,7 +113,7 @@ function auth_profile(): array {
 }
 function auth_password(): string {
     $p = $_POST['password'] ?? ''; $confirm = $_POST['password_confirm'] ?? '';
-    if (!is_string($p) || preg_match_all('/./us', $p) < 12 || strlen($p) > 72 || str_contains($p, "\0")) throw new DomainException('Heslo musí mít alespoň 12 znaků a nejvýše 72 bajtů.');
+    if (!is_string($p) || preg_match_all('/./us', $p) < 7 || strlen($p) > 72 || str_contains($p, "\0")) throw new DomainException('Heslo musí mít alespoň 7 znaků a nejvýše 72 bajtů.');
     if (!is_string($confirm) || !hash_equals($p, $confirm)) throw new DomainException('Zadaná hesla se neshodují.');
     return $p;
 }

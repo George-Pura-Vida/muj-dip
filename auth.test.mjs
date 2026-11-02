@@ -23,7 +23,7 @@ class Client{
 }
 const a=new Client(),b=new Client();
 const profile={first_name:'Test',last_name:'Uživatel',company:'Test firma',ico:'12345678',dic:'CZ12345678',phone:'+420 777 123 456',address:'Testovací 1, 11000 Praha',email:'integration@example.invalid'};
-const password='Test-only-password-2026';let checks=0;
+const password='Test123';let checks=0;
 function ok(value){assert.ok(value);checks++;}
 async function mailToken(purpose){const lines=(await readFile(join(dir,'var/accounts/test-outbox.jsonl'),'utf8')).trim().split('\n').map(JSON.parse);return new URL(lines.filter(x=>x.purpose===purpose).at(-1).url).hash.slice(7);}
 try{
@@ -31,7 +31,10 @@ try{
  ok((await a.request('/')).status===303);
  ok((await a.request('/index.html')).status===303);
  ok((await a.request('/auth/bootstrap.php')).status===403);
- await a.request('/account.php?view=register');
+ const registration=await a.request('/account.php?view=register');
+ ok(registration.headers.get('referrer-policy')==='same-origin');
+ ok(registration.html.includes('name="referrer" content="same-origin"'));
+ ok(registration.html.includes('minlength="7"'));
  ok((await a.request('/account.php?view=register',{action:'register',...profile,password,password_confirm:password,privacy:'yes',csrf:'invalid'})).status===403);
  const reg=await a.request('/account.php?view=register',{action:'register',...profile,password,password_confirm:password,privacy:'yes'});ok(reg.status===303);
  ok(!(await readFile(join(dir,'var/accounts/accounts.sqlite'))).includes(Buffer.from(password)));
@@ -48,7 +51,7 @@ try{
  await b.request('/account.php?view=forgot');ok((await b.request('/account.php?view=forgot',{action:'forgot',email:profile.email})).status===303);
  const reset=await mailToken('reset');await b.request('/account.php?view=reset');
  ok((await b.request('/account.php?view=reset',{action:'reset',token:reset,password:'žžžžžž',password_confirm:'žžžžžž'})).status===200);
- const newPassword='Changed-test-password-2026';
+ const newPassword='New1234';
  ok((await b.request('/account.php?view=reset',{action:'reset',token:reset,password:newPassword,password_confirm:newPassword})).status===303);
  ok((await a.request('/')).status===303);
  await b.request('/account.php?view=reset');ok((await b.request('/account.php?view=reset',{action:'reset',token:reset,password:newPassword,password_confirm:newPassword})).status===200);
