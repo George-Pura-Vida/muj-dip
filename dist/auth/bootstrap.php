@@ -2,6 +2,7 @@
 declare(strict_types=1);
 // This directory is denied by Apache; public entry points explicitly include this file.
 const AUTH_ORIGIN = 'https://muj-dip.jirijanousek.cz';
+const AUTH_APPROVER_EMAIL = 'info@jirijanousek.cz';
 const AUTH_IDLE = 1800;
 const AUTH_ABSOLUTE = 43200;
 
@@ -30,6 +31,16 @@ function auth_db(): PDO {
         hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         purpose TEXT NOT NULL, value TEXT NOT NULL DEFAULT "", expires INTEGER NOT NULL
     ); CREATE TABLE IF NOT EXISTS limits (key TEXT PRIMARY KEY, count INTEGER NOT NULL, expires INTEGER NOT NULL);');
+    // Migration is serialized and defaults every existing account to pending.
+    $db->exec('BEGIN IMMEDIATE');
+    try {
+        $columns = $db->query('PRAGMA table_info(users)')->fetchAll(PDO::FETCH_COLUMN, 1);
+        foreach (['approval_status'=>"TEXT NOT NULL DEFAULT 'pending'", 'approved_by'=>'INTEGER', 'approved_at'=>'INTEGER'] as $name=>$definition) {
+            if (!in_array($name, $columns, true)) $db->exec('ALTER TABLE users ADD COLUMN '.$name.' '.$definition);
+        }
+        $db->exec('CREATE TABLE IF NOT EXISTS approval_audit (id INTEGER PRIMARY KEY AUTOINCREMENT, actor_id INTEGER NOT NULL, user_id INTEGER NOT NULL, decision TEXT NOT NULL, created_at INTEGER NOT NULL)');
+        $db->exec('COMMIT');
+    } catch (Throwable $e) { $db->exec('ROLLBACK'); throw $e; }
     @chmod(auth_dir() . '/accounts.sqlite', 0600);
     return $db;
 }
@@ -60,10 +71,16 @@ function auth_user(): ?array {
         auth_logout(); return null;
     }
     $u = auth_query('SELECT * FROM users WHERE id=?', [$_SESSION['uid']])->fetch(PDO::FETCH_ASSOC);
-    if (!$u || !$u['verified'] || (int)$u['session_version'] !== (int)($_SESSION['version'] ?? 0)) {
+    if (!$u || !$u['verified'] || !auth_approved($u) || (int)$u['session_version'] !== (int)($_SESSION['version'] ?? 0)) {
         auth_logout(); return null;
     }
     $_SESSION['seen'] = $now; return $u;
+}
+function auth_is_admin(array $u): bool {
+    return (bool)$u['verified'] && strtolower($u['email']) === AUTH_APPROVER_EMAIL;
+}
+function auth_approved(array $u): bool {
+    return auth_is_admin($u) || ($u['approval_status'] ?? 'pending') === 'approved';
 }
 function auth_login(array $u): void {
     session_regenerate_id(true);
@@ -165,7 +182,7 @@ function auth_process(?array $u): void {
                 if (!auth_mail($email,'verify',$token)) { auth_query('DELETE FROM users WHERE id=? AND verified=0',[$uid]); throw new DomainException('Ověřovací e-mail se nyní nepodařilo odeslat. Zkuste registraci později nebo nás kontaktujte.'); }
             } catch (PDOException $e) { if ($e->getCode() !== '23000') throw $e; }
         }
-        auth_redirect('login','Pokud je adresa nová, odeslali jsme ověřovací odkaz. Před přihlášením potvrďte svůj e-mail. Pokud účet už máte, přihlaste se nebo obnovte heslo.');
+        auth_redirect('login','Pokud je adresa nová, odeslali jsme ověřovací odkaz. Po potvrzení e-mailu vyčkejte na schválení správcem. Pokud účet už máte, přihlaste se nebo obnovte heslo.');
     }
     if ($action === 'login') {
         $email=auth_email(); auth_limit('login-email',$email,10,900); auth_limit('login-ip',$ip,40,900);
@@ -175,6 +192,7 @@ function auth_process(?array $u): void {
         $dummy='$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.';
         $ok=is_string($p)&&strlen($p)<=72&&password_verify($p,$found['password_hash']??$dummy);
         if (!$ok || !$found || !$found['verified']) throw new DomainException('E-mail nebo heslo není správné, případně e-mail ještě nebyl potvrzen.');
+        if (!auth_approved($found)) throw new DomainException(($found['approval_status'] ?? '') === 'rejected' ? 'Přístup k tomuto účtu nebyl schválen. Kontaktujte správce na info@jirijanousek.cz.' : 'E-mail je ověřen. Účet čeká na schválení správcem Jiřím Janouškem.');
         if (password_needs_rehash($found['password_hash'],PASSWORD_DEFAULT)) auth_query('UPDATE users SET password_hash=? WHERE id=?',[auth_hash($p),$found['id']]);
         auth_login($found); header('Location: /',true,303);exit;
     }
@@ -186,7 +204,7 @@ function auth_process(?array $u): void {
     }
     if ($action === 'verify') {
         auth_consume('verify',function($t){auth_query('UPDATE users SET verified=1,updated_at=? WHERE id=?',[time(),$t['user_id']]);});
-        auth_redirect('login','E-mail byl ověřen. Nyní se můžete přihlásit.');
+        auth_redirect('login','E-mail byl ověřen. Přihlášení je možné až po schválení účtu správcem. Správce se může přihlásit přímo.');
     }
     if ($action === 'reset') {
         auth_limit('reset-ip',$ip,20,1800);$hash=auth_hash(auth_password());
@@ -194,10 +212,25 @@ function auth_process(?array $u): void {
         auth_logout();auth_redirect('login','Heslo bylo změněno a všechna přihlášení ukončena. Přihlaste se novým heslem.');
     }
     if (!$u) { http_response_code(401);throw new DomainException('Nejprve se přihlaste.'); }
+    if ($action === 'approval') {
+        if (!auth_is_admin($u)) { http_response_code(403); throw new DomainException('Tuto akci může provést pouze správce.'); }
+        $target=auth_text('user_id',20,true); $decision=auth_text('decision',20,true);
+        if (!ctype_digit($target) || !in_array($decision,['approved','rejected','pending'],true)) throw new DomainException('Neplatná změna přístupu.');
+        $db=auth_db(); $db->exec('BEGIN IMMEDIATE');
+        try {
+            $targetUser=auth_query('SELECT * FROM users WHERE id=?',[(int)$target])->fetch(PDO::FETCH_ASSOC);
+            if (!$targetUser || auth_is_admin($targetUser) || (int)$target===(int)$u['id']) throw new DomainException('Tento účet nelze takto upravit.');
+            auth_query('UPDATE users SET approval_status=?,approved_by=?,approved_at=?,session_version=session_version+1,updated_at=? WHERE id=?',[$decision,$u['id'],time(),time(),(int)$target]);
+            auth_query('INSERT INTO approval_audit(actor_id,user_id,decision,created_at) VALUES(?,?,?,?)',[$u['id'],(int)$target,$decision,time()]);
+            $db->exec('COMMIT');
+        } catch (Throwable $e) { $db->exec('ROLLBACK'); throw $e; }
+        auth_redirect('approvals','Přístup byl aktualizován. Předchozí relace tohoto účtu byly ukončeny.');
+    }
     if ($action === 'logout') { auth_logout();auth_redirect('login','Byli jste odhlášeni.'); }
     if ($action === 'profile') {
         $p=auth_profile();$email=auth_email();
         if ($email!==$u['email']) {
+            if (auth_is_admin($u)) throw new DomainException('E-mail správce nelze změnit v profilu. Kontaktujte provozovatele aplikace.');
             auth_check_current($u);
             if(auth_query('SELECT id FROM users WHERE email=? AND id<>?',[$email,$u['id']])->fetch())throw new DomainException('Tuto e-mailovou adresu nelze použít.');
             $token=auth_token((int)$u['id'],'email',$email);
@@ -226,3 +259,4 @@ function auth_require(): array {
     catch(Throwable $e){http_response_code(503);exit('Přihlášení je dočasně nedostupné. Kontakt: info@jirijanousek.cz');}
 }
 function h(string $v): string { return htmlspecialchars($v,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'); }
+

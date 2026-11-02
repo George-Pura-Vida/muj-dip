@@ -14,3 +14,11 @@ PHP mail() acceptance does not guarantee delivery. Recovery responses deliberate
 The account stores profile data only. Investment plans remain browser-local, namespaced per account; existing exports can be imported manually. No automatic cloud plan synchronization is implemented.
 
 Local integration tests run PHP's development server bound to 127.0.0.1 with MUJDIP_TEST_MODE=1. This enables a local test outbox only when PHP_SAPI is cli-server and the peer is loopback. Production Apache cannot enable that path through an HTTP request.
+
+
+## Owner approval
+Only the verified info@jirijanousek.cz account can open /account.php?view=approvals. It can list paginated registered users, inspect their profile fields, approve, reject or revoke access. Email verification alone never grants normal users access. The administrator email cannot be changed through the profile form.
+
+On the first deployment of approval support, existing accounts migrate to pending. The verified owner account remains able to administer them. Every approval decision is recorded in the private SQLite audit table, and increments the target account session version. Revoked sessions fail their next authenticated request. Exported files and a page already loaded in a browser cannot be remotely erased. Investment calculation code is client-side and public static assets are not DRM.
+
+Hosting remains PHP on Webkitty. GitHub Pages must not publish dist/ because it cannot execute the PHP login gate. CI verifies source and isolated authentication only.

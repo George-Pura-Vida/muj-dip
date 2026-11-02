@@ -14,8 +14,8 @@ let logs='';server.stderr.on('data',b=>logs+=b);server.on('error',e=>logs+=e.mes
 const base='http://127.0.0.1:18975';
 class Client{
  cookie='';csrf='';
- async request(path='/',data){
-  const r=await fetch(base+path,{redirect:'manual',method:data?'POST':'GET',headers:{Cookie:this.cookie,...(data?{'Content-Type':'application/x-www-form-urlencoded',Origin:base}:{})},body:data?new URLSearchParams({csrf:this.csrf,...data}):undefined});
+ async request(path='/',data,extraHeaders={}){
+  const r=await fetch(base+path,{redirect:'manual',method:data?'POST':'GET',headers:{Cookie:this.cookie,...(data?{'Content-Type':'application/x-www-form-urlencoded',Origin:base}:{}),...extraHeaders},body:data?new URLSearchParams({csrf:this.csrf,...data}):undefined});
   const cookie=r.headers.getSetCookie()[0];if(cookie)this.cookie=cookie.split(';')[0];
   const html=await r.text();const csrf=html.match(/name="csrf" value="([a-f0-9]+)"/);if(csrf)this.csrf=csrf[1];
   return {status:r.status,location:r.headers.get('location'),headers:r.headers,html};
@@ -44,10 +44,42 @@ try{
  const verify=await mailToken('verify');await a.request('/account.php?view=verify');
  ok((await a.request('/account.php?view=verify',{action:'verify',token:verify})).status===303);
  await a.request('/account.php?view=verify');ok((await a.request('/account.php?view=verify',{action:'verify',token:verify})).status===200);
+ // Approval gate: neither verified email nor an old session implies approval.
+ ok((await b.request('/account.php?view=approvals')).status===403);
+ await a.request('/account.php?view=login');
+ const pending=await a.request('/account.php?view=login',{action:'login',email:profile.email,password});
+ ok(pending.status===200&&pending.html.includes('čeká na schválení'));
+ ok((await a.request('/')).status===303);
+ const admin=new Client();const adminProfile={...profile,email:'info@jirijanousek.cz',first_name:'Správce'};
+ await admin.request('/account.php?view=register');
+ ok((await admin.request('/account.php?view=register',{action:'register',...adminProfile,password,password_confirm:password,privacy:'yes'})).status===303);
+ await admin.request('/account.php?view=login');ok((await admin.request('/account.php?view=login',{action:'login',email:adminProfile.email,password})).status===200);
+ const adminToken=await mailToken('verify');await admin.request('/account.php?view=verify');
+ ok((await admin.request('/account.php?view=verify',{action:'verify',token:adminToken})).status===303);
+ await admin.request('/account.php?view=login');ok((await admin.request('/account.php?view=login',{action:'login',email:adminProfile.email,password})).location==='/');
+ const panel=await admin.request('/account.php?view=approvals');ok(panel.status===200&&panel.html.includes(profile.email));
+ ok((await admin.request('/account.php?view=approvals',{action:'approval',user_id:'1',decision:'approved',csrf:'invalid'})).status===403);
+ ok((await admin.request('/account.php?view=approvals',{action:'approval',user_id:'1',decision:'approved'},{Origin:'https://example.invalid'})).status===403);
+ ok((await admin.request('/account.php?view=approvals',{action:'approval',user_id:'1',decision:'approved'})).status===303);
+ await a.request('/account.php?view=login');ok((await a.request('/account.php?view=login',{action:'login',email:profile.email,password})).location==='/');
+ ok((await a.request('/account.php?view=approvals')).status===403);
+ ok((await a.request('/account.php?view=profile',{action:'approval',user_id:'1',decision:'approved'})).status===403);
+ await admin.request('/account.php?view=approvals');
+ ok((await admin.request('/account.php?view=approvals',{action:'approval',user_id:'1',decision:'pending'})).status===303);
+ ok((await a.request('/')).status===303);
+ await a.request('/account.php?view=login');ok((await a.request('/account.php?view=login',{action:'login',email:profile.email,password})).status===200);
+ await admin.request('/account.php?view=approvals');
+ ok((await admin.request('/account.php?view=approvals',{action:'approval',user_id:'1',decision:'rejected'})).status===303);
+ await a.request('/account.php?view=login');const rejected=await a.request('/account.php?view=login',{action:'login',email:profile.email,password});ok(rejected.html.includes('nebyl schválen'));
+ await admin.request('/account.php?view=approvals');ok((await admin.request('/account.php?view=approvals',{action:'approval',user_id:'1',decision:'approved'})).status===303);
+ await admin.request('/account.php?view=approvals');ok((await admin.request('/account.php?view=approvals',{action:'approval',user_id:'2',decision:'rejected'})).status===200);
+ await admin.request('/account.php?view=profile');ok((await admin.request('/account.php?view=profile',{action:'profile',...adminProfile,email:'other@example.invalid',current_password:password})).html.includes('E-mail správce nelze změnit'));
  await a.request('/account.php?view=login');ok((await a.request('/account.php?view=login',{action:'login',email:profile.email,password})).location==='/');
  const app=await a.request('/');ok(app.status===200&&app.html.includes('data-account-key="u1"'));ok(app.headers.get('cache-control').includes('no-store'));
  await a.request('/account.php?view=profile');ok((await a.request('/account.php?view=profile',{action:'profile',...profile,first_name:'Upraveno'})).status===303);
  ok((await a.request('/account.php?view=profile')).html.includes('value="Upraveno"'));
+ await a.request('/account.php?view=profile');ok((await a.request('/account.php?view=profile',{action:'profile',...profile,first_name:'<script>alert(1)</script>'})).status===303);
+ const safePanel=await admin.request('/account.php?view=approvals');ok(safePanel.html.includes('&lt;script&gt;alert(1)&lt;/script&gt;')&&!safePanel.html.includes('<script>alert(1)</script>'));
  await b.request('/account.php?view=forgot');ok((await b.request('/account.php?view=forgot',{action:'forgot',email:profile.email})).status===303);
  const reset=await mailToken('reset');await b.request('/account.php?view=reset');
  ok((await b.request('/account.php?view=reset',{action:'reset',token:reset,password:'žžžžžž',password_confirm:'žžžžžž'})).status===200);
@@ -69,5 +101,9 @@ try{
  await b.request('/account.php?view=reset');ok((await b.request('/account.php?view=reset',{action:'reset',token:expired,password,password_confirm:password})).status===200);
  ok((await a.request('/')).status===200);
  await a.request('/account.php?view=profile');ok((await a.request('/account.php?view=profile',{action:'logout'})).status===303);ok((await a.request('/')).status===303);
+ await a.request('/account.php?view=login');
+ for(let i=0;i<10;i++)ok((await a.request('/account.php?view=login',{action:'login',email:'limit@example.invalid',password:'BadPassword'})).status===200);
+ ok((await a.request('/account.php?view=login',{action:'login',email:'limit@example.invalid',password:'BadPassword'})).status===429);
  console.log(`PASS: ${checks} authentication integration checks (isolated SQLite and email outbox).`);
-}finally{server.kill();await new Promise(r=>server.once('exit',r));await rm(dir,{recursive:true,force:true});}
+}catch(error){console.error(logs);throw error;}finally{server.kill();await new Promise(r=>server.once('exit',r));await rm(dir,{recursive:true,force:true});}
+
