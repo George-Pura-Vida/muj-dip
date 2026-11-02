@@ -1,5 +1,5 @@
-import './comparison.js?v=30';
-import './guide.js?v=29';
+import './comparison.js?v=31';
+import './guide.js?v=30';
 import {excelBytes,importPlan,saveFile,payload} from './files.js?v=27';
 import {calculate,clean,DEFAULTS} from './engine.js?v=27';
 const $=id=>document.getElementById(id),money=new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:0}),fmt=n=>money.format(n)+' Kč',num=n=>money.format(n),pct=n=>new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:8}).format(n*100)+' %';
@@ -41,10 +41,11 @@ $('print').addEventListener('click',async()=>{try{toast('Připravuji PDF přehle
 try{const saved=localStorage.getItem(storageKey);if(saved)state=clean(JSON.parse(saved));}catch{}sync();render();
 
 const menuToggle=$('menuToggle'),topNav=$('topNav');
-function closeMenu(){menuToggle.setAttribute('aria-expanded','false');menuToggle.setAttribute('aria-label','Otevřít menu');topNav.classList.remove('menu-open');}
+const fileMenu=topNav.querySelector('.menu-files');
+function closeMenu(){if(fileMenu)fileMenu.open=false;menuToggle.setAttribute('aria-expanded','false');menuToggle.setAttribute('aria-label','Otevřít menu');topNav.classList.remove('menu-open');}
 menuToggle.addEventListener('click',()=>{const open=menuToggle.getAttribute('aria-expanded')!=='true';menuToggle.setAttribute('aria-expanded',String(open));menuToggle.setAttribute('aria-label',open?'Zavřít menu':'Otevřít menu');topNav.classList.toggle('menu-open',open);});
 topNav.addEventListener('click',e=>{if(e.target.closest('[data-tab],a[href]'))closeMenu();});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&menuToggle.getAttribute('aria-expanded')==='true'){closeMenu();menuToggle.focus();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&fileMenu?.open&&menuToggle.getAttribute('aria-expanded')!=='true'){fileMenu.open=false;fileMenu.querySelector('summary').focus();}if(e.key==='Escape'&&menuToggle.getAttribute('aria-expanded')==='true'){closeMenu();menuToggle.focus();}});
 document.addEventListener('click',e=>{if(!topNav.contains(e.target)&&!menuToggle.contains(e.target))closeMenu();});
 
 const advancedToggle=$('advancedToggle'),advancedSettings=$('advancedSettings');

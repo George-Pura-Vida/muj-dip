@@ -91,8 +91,8 @@ function setup(root,account=false){
  }
  if(!local.length)return;
  const toolbar=document.createElement('div');toolbar.className='guide-toolbar';
- const start=document.createElement('button');start.type='button';start.className='guide-start';start.textContent=root.matches('.stress-controls')?'① Průvodce scénářem':'① Průvodce vyplněním';start.onclick=()=>{opener=start;show(local[0],local);};
- const hint=document.createElement('p');hint.textContent='Postup krok za krokem. Číslo u pole otevře vysvětlivku. Hodnoty zadáváte sami; průvodce formulář neodesílá.';
+ const start=document.createElement('button');start.type='button';start.className='guide-start';start.textContent=root.matches('.stress-controls')?'🧭 Průvodce scénářem':'🧭 Pomocník s vyplněním';start.onclick=()=>{opener=start;show(local[0],local);};
+ const hint=document.createElement('p');hint.textContent='Nevíte si rady? Číslo u pole otevře nápovědu. Pomocník vás provede krok za krokem.';
  toolbar.append(start,hint);const anchor=account?root.querySelector('form'):root.querySelector('aside.inputs');(anchor||root).prepend(toolbar);
 }
 for(const id of ['plan','company','comparison']){const root=document.getElementById(id);if(root)setup(root);}
