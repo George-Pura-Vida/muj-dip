@@ -2,7 +2,7 @@
 declare(strict_types=1);
 // This directory is denied by Apache; public entry points explicitly include this file.
 const AUTH_ORIGIN = 'https://muj-dip.jirijanousek.cz';
-const AUTH_APPROVER_EMAIL = 'info@jirijanousek.cz';
+const AUTH_APPROVER_EMAIL = 'jgjjanousek@gmail.com';
 const AUTH_IDLE = 1800;
 const AUTH_ABSOLUTE = 43200;
 
@@ -182,7 +182,7 @@ function auth_process(?array $u): void {
                 if (!auth_mail($email,'verify',$token)) { auth_query('DELETE FROM users WHERE id=? AND verified=0',[$uid]); throw new DomainException('Ověřovací e-mail se nyní nepodařilo odeslat. Zkuste registraci později nebo nás kontaktujte.'); }
             } catch (PDOException $e) { if ($e->getCode() !== '23000') throw $e; }
         }
-        auth_redirect('login','Pokud je adresa nová, odeslali jsme ověřovací odkaz. Po potvrzení e-mailu vyčkejte na schválení správcem. Pokud účet už máte, přihlaste se nebo obnovte heslo.');
+        auth_redirect('login','Pokud je adresa nová, odeslali jsme ověřovací odkaz. Nejprve potvrďte svůj e-mail odkazem ve zprávě. Poté z bezpečnostních důvodů vyčkejte na schválení přístupu provozovatelem aplikace. Pokud účet už máte, přihlaste se nebo obnovte heslo.');
     }
     if ($action === 'login') {
         $email=auth_email(); auth_limit('login-email',$email,10,900); auth_limit('login-ip',$ip,40,900);
@@ -192,7 +192,7 @@ function auth_process(?array $u): void {
         $dummy='$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.';
         $ok=is_string($p)&&strlen($p)<=72&&password_verify($p,$found['password_hash']??$dummy);
         if (!$ok || !$found || !$found['verified']) throw new DomainException('E-mail nebo heslo není správné, případně e-mail ještě nebyl potvrzen.');
-        if (!auth_approved($found)) throw new DomainException(($found['approval_status'] ?? '') === 'rejected' ? 'Přístup k tomuto účtu nebyl schválen. Kontaktujte správce na info@jirijanousek.cz.' : 'E-mail je ověřen. Účet čeká na schválení správcem Jiřím Janouškem.');
+        if (!auth_approved($found)) throw new DomainException(($found['approval_status'] ?? '') === 'rejected' ? 'Přístup k tomuto účtu nebyl schválen. Kontaktujte správce na info@jirijanousek.cz.' : 'E-mail je ověřen. Účet čeká na schválení přístupu provozovatelem aplikace z bezpečnostních důvodů.');
         if (password_needs_rehash($found['password_hash'],PASSWORD_DEFAULT)) auth_query('UPDATE users SET password_hash=? WHERE id=?',[auth_hash($p),$found['id']]);
         auth_login($found); header('Location: /',true,303);exit;
     }

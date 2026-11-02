@@ -17,7 +17,7 @@ Local integration tests run PHP's development server bound to 127.0.0.1 with MUJ
 
 
 ## Owner approval
-Only the verified info@jirijanousek.cz account can open /account.php?view=approvals. It can list paginated registered users, inspect their profile fields, approve, reject or revoke access. Email verification alone never grants normal users access. The administrator email cannot be changed through the profile form.
+Only the verified jgjjanousek@gmail.com account can open /account.php?view=approvals. It can list paginated registered users, inspect their profile fields, approve, reject or revoke access. Email verification alone never grants normal users access. The administrator email cannot be changed through the profile form.
 
 On the first deployment of approval support, existing accounts migrate to pending. The verified owner account remains able to administer them. Every approval decision is recorded in the private SQLite audit table, and increments the target account session version. Revoked sessions fail their next authenticated request. Exported files and a page already loaded in a browser cannot be remotely erased. Investment calculation code is client-side and public static assets are not DRM.
 
