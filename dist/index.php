@@ -10,6 +10,6 @@ $quickLabel=auth_is_admin($user)?'Admin':'Účet';
 $quickUrl=auth_is_admin($user)?'/account.php?view=approvals':'/account.php?view=profile';
 $html=str_replace('<button id="menuToggle"', '<a class="account-shortcut" href="'.$quickUrl.'">'.$quickLabel.'</a><button id="menuToggle"', $html);
 $logout='<form class="nav-logout" method="post" action="/account.php?view=login"><input type="hidden" name="csrf" value="'.h($_SESSION['csrf']).'"><input type="hidden" name="action" value="logout"><button type="submit" class="nav">Odhlásit se</button></form>';
-$html=str_replace('<a class="nav menu-contact"', $logout.'<a class="nav menu-contact"', $html);
+$html=str_replace('</div></nav></header>', $logout.'</div></nav></header>', $html);
 echo str_replace('<body>', '<body data-account-key="u'.(int)$user['id'].'">', $html);
 
