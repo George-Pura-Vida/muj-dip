@@ -5,7 +5,7 @@ document.querySelectorAll('[data-password]').forEach(button=>{
     if(!input)return;
     const shown=input.type==='password'; input.type=shown?'text':'password';
     button.setAttribute('aria-pressed',String(shown));
-    const label=input.closest('label').querySelector(':scope > span').textContent.replace('*','').trim();
+    const label=(input.closest('label').querySelector('.guide-label-row > span')||input.closest('label').querySelector(':scope > span')).textContent.replace('*','').trim();
     button.setAttribute('aria-label',(shown?'Skrýt heslo: ':'Zobrazit heslo: ')+label);
   });
 });
