@@ -1,5 +1,5 @@
-import './comparison.js?v=28';
-import './guide.js?v=27';
+import './comparison.js?v=29';
+import './guide.js?v=29';
 import {excelBytes,importPlan,saveFile,payload} from './files.js?v=27';
 import {calculate,clean,DEFAULTS} from './engine.js?v=27';
 const $=id=>document.getElementById(id),money=new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:0}),fmt=n=>money.format(n)+' Kč',num=n=>money.format(n),pct=n=>new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:8}).format(n*100)+' %';

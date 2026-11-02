@@ -35,8 +35,10 @@ test('timing comparison preserves user state and all endpoints use same payout r
 test('legacy settings retain no-crisis behaviour; hostile shock inputs are clamped',()=>{
  assert.equal(cleanComparison({own:2000}).stress,0);const s=cleanComparison({years:10,shockYear:200,stress:8,dipShock:-300,dpsShock:Infinity});assert.equal(s.shockYear,10);assert.equal(s.dipShock,-100);assert.equal(s.stress,1);assert.equal(s.dpsShock,-35);
 });
-test('requested example: both 7.9 percent net, no duplicate ongoing fees and editable crisis',()=>{
- const a=compare(COMP_EXAMPLE);near(a.s.dipRate,7.9);near(a.s.dpsRate,7.9);near(a.dip.end.management,0);near(a.dps.end.performance,0);near(a.dip.end.total,1707362.1253132664);near(a.dps.end.total,1727958.2093459282);
- const b=compare({...COMP_EXAMPLE,stress:1,shockYear:20});near(b.dip.maxDrawdown,.15);near(b.dps.maxDrawdown,.35);assert.ok(b.difference>0);
+test('requested example: both 7.9 percent gross, editable costs 1.5 and 1, no double fees in net mode',()=>{
+ const a=compare(COMP_EXAMPLE);near(a.s.dipRate,7.9);near(a.s.dpsRate,7.9);near(a.s.dipFee,1.5);near(a.s.dpsFee,1);assert.equal(a.s.netReturns,0);assert.ok(a.dip.end.management>0);assert.ok(a.dps.end.performance>0);
+ const net=compare({...COMP_EXAMPLE,netReturns:1});near(net.dip.end.management,0);near(net.dps.end.performance,0);assert.ok(net.dip.end.value>a.dip.end.value);assert.ok(net.dps.end.value>a.dps.end.value);
+ const higher=compare({...COMP_EXAMPLE,dipFee:2,dpsFee:1.5});assert.ok(higher.dip.end.value<a.dip.end.value);assert.ok(higher.dps.end.value<a.dps.end.value);
+ const b=compare({...COMP_EXAMPLE,netReturns:1,stress:1,shockYear:20});near(b.dip.maxDrawdown,.15);near(b.dps.maxDrawdown,.35);assert.ok(b.difference>0);
  const c=compare({...COMP_EXAMPLE,stress:1,shockYear:20,dipShock:-50,dpsShock:-10});assert.ok(c.difference<0);
 });
