@@ -24,3 +24,6 @@ On the first deployment of approval support, existing accounts migrate to pendin
 Hosting remains PHP on Webkitty. GitHub Pages must not publish dist/ because it cannot execute the PHP login gate. CI verifies source and isolated authentication only.
 
 Public legal pages are at legal.php?view=terms/privacy/cookies/legal. Account pages and calculator expose the same footer. privacy.js is an informational notice for necessary storage only, not an analytics-consent manager. Its 180-day acknowledgement can be reopened in the footer. Do not add optional tracking without a real opt-in and withdrawal implementation. Legal text reflects the current app; operator processor contracts, retention practice and legal review must be verified separately.
+
+## Registration notification
+Each successfully created new account triggers one plain-text notification to AUTH_APPROVER_EMAIL (jgjanousek@gmail.com), after the user's verification email is accepted by the mail transport. It includes name, email, optional company and a link to the authenticated approvals panel. Duplicate registration attempts do not send another alert. Verification and owner approval remain required. Notification failures are logged without rolling back registration. As with verification mail, PHP mail() acceptance is not proof of inbox delivery; confirm delivery on the host.

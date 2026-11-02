@@ -44,6 +44,17 @@ try{
  ok((await a.request('/account.php?view=register',{action:'register',...profile,password,password_confirm:password,privacy:'yes',csrf:'invalid'})).status===403);
  const reg=await a.request('/account.php?view=register',{action:'register',...profile,password,password_confirm:password,privacy:'yes'});ok(reg.status===303);
  ok(!(await readFile(join(dir,'var/accounts/accounts.sqlite'))).includes(Buffer.from(password)));
+ const notifications=async()=> (await readFile(join(dir,'var/accounts/test-outbox.jsonl'),'utf8')).trim().split('\n').map(JSON.parse).filter(x=>x.purpose==='admin-registration');
+ const alerts=await notifications();ok(alerts.length===1);
+ ok(alerts[0].to==='jgjanousek@gmail.com'&&alerts[0].subject.includes('Nová registrace'));
+ ok(alerts[0].body.includes(profile.email)&&alerts[0].body.includes(profile.first_name+' '+profile.last_name)&&alerts[0].body.includes(profile.company));
+ ok(alerts[0].url===base+'/account.php?view=approvals'&&!alerts[0].url.includes('token='));
+ ok(!alerts[0].body.includes(password)&&!alerts[0].body.includes(await mailToken('verify')));
+ // Duplicate registration does not send another administrator alert.
+ await a.request('/account.php?view=register');
+ ok((await a.request('/account.php?view=register',{action:'register',...profile,password,password_confirm:password,privacy:'yes'})).status===303);
+ ok((await notifications()).length===1);
+
  await a.request('/account.php?view=login');
  ok((await a.request('/account.php?view=login',{action:'login',email:profile.email,password})).status===200);
  ok((await a.request('/')).status===303);

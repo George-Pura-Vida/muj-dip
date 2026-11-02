@@ -166,6 +166,33 @@ function auth_mail(string $to, string $purpose, string $token): bool {
     $subject = '=?UTF-8?B?' . base64_encode($titles[$purpose]) . '?=';
     return mail($to,$subject,$body,"From: MUJ-DIP <info@jirijanousek.cz>\r\nReply-To: info@jirijanousek.cz\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8");
 }
+function auth_notify_registration(string $email, string $firstName, string $lastName, string $company): void {
+    $base = auth_test() ? 'http://' . $_SERVER['HTTP_HOST'] : AUTH_ORIGIN;
+    $url = $base . '/account.php?view=approvals';
+    $title = 'Nová registrace MŮJ-DIP – čeká na schválení';
+    // User-supplied values belong only in the plain-text body, never in headers.
+    $body = "Dobrý den,\n\nv aplikaci MŮJ-DIP se zaregistroval nový uživatel.\n\n"
+        . "Jméno: " . $firstName . " " . $lastName . "\nE-mail: " . $email
+        . ($company !== '' ? "\nFirma: " . $company : '')
+        . "\n\nUživatel musí nejprve ověřit svůj e-mail. Přístup získá až po ověření e-mailu a vašem schválení."
+        . "\n\nSpráva uživatelů:\n" . $url
+        . "\n\nPřihlaste se administrátorským účtem a u daného uživatele zvolte Schválit přístup."
+        . "\nTento odkaz sám o sobě účet neaktivuje.\n\nMŮJ-DIP\n";
+    try {
+        if (auth_test()) {
+            $sent = file_put_contents(auth_dir().'/test-outbox.jsonl',
+                json_encode(['to'=>AUTH_APPROVER_EMAIL,'purpose'=>'admin-registration','url'=>$url,'subject'=>$title,'body'=>$body])."\n",
+                FILE_APPEND|LOCK_EX) !== false;
+        } else {
+            $sent = mail(AUTH_APPROVER_EMAIL, '=?UTF-8?B?' . base64_encode($title) . '?=', $body,
+                "From: MUJ-DIP <info@jirijanousek.cz>\r\nReply-To: info@jirijanousek.cz\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8");
+        }
+        if (!$sent) error_log('MUJ-DIP admin registration notification transport failed');
+    } catch (Throwable $e) {
+        // Notification trouble must not discard an otherwise valid registration.
+        error_log('MUJ-DIP admin registration notification failed');
+    }
+}
 function auth_process(?array $u): void {
     auth_csrf(); $action = auth_text('action',30,true); $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
     auth_limit('post-ip',$ip,150,900);
@@ -180,6 +207,7 @@ function auth_process(?array $u): void {
                 $uid=(int)auth_db()->lastInsertId();
                 $token=auth_token($uid,'verify');
                 if (!auth_mail($email,'verify',$token)) { auth_query('DELETE FROM users WHERE id=? AND verified=0',[$uid]); throw new DomainException('Ověřovací e-mail se nyní nepodařilo odeslat. Zkuste registraci později nebo nás kontaktujte.'); }
+                auth_notify_registration($email,$p[0],$p[1],$p[2]);
             } catch (PDOException $e) { if ($e->getCode() !== '23000') throw $e; }
         }
         auth_redirect('login','Pokud je adresa nová, odeslali jsme ověřovací odkaz. Nejprve potvrďte svůj e-mail odkazem ve zprávě. Poté z bezpečnostních důvodů vyčkejte na schválení přístupu provozovatelem aplikace. Pokud účet už máte, přihlaste se nebo obnovte heslo.');
