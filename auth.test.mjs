@@ -58,7 +58,10 @@ try{
  await a.request('/account.php?view=login');
  ok((await a.request('/account.php?view=login',{action:'login',email:profile.email,password})).status===200);
  ok((await a.request('/')).status===303);
- const verify=await mailToken('verify');await a.request('/account.php?view=verify');
+ const verify=await mailToken('verify');
+ const lifetimes=spawnSync(php,[...args,'-r',`require ${JSON.stringify(join(dir,'dist/auth/bootstrap.php').replaceAll('\\\\','/'))}; echo auth_query("SELECT expires FROM tokens WHERE purpose='verify' LIMIT 1")->fetchColumn()-time();`],{encoding:'utf8'});
+ assert.equal(lifetimes.status,0,lifetimes.stderr);ok(Number(lifetimes.stdout)>86300&&Number(lifetimes.stdout)<=86400);
+ await a.request('/account.php?view=verify');
  ok((await a.request('/account.php?view=verify',{action:'verify',token:verify})).status===303);
  await a.request('/account.php?view=verify');ok((await a.request('/account.php?view=verify',{action:'verify',token:verify})).status===200);
  // Approval gate: neither verified email nor an old session implies approval.

@@ -139,7 +139,8 @@ function auth_check_current(array $u): void {
     $p = $_POST['current_password'] ?? ($_POST['current_password_change'] ?? '');
     if (!is_string($p) || strlen($p)>72 || !password_verify($p, $u['password_hash'])) throw new DomainException('Současné heslo není správné.');
 }
-function auth_token(int $uid, string $purpose, string $value = '', int $ttl = 1800): string {
+function auth_token(int $uid, string $purpose, string $value = '', ?int $ttl = null): string {
+    $ttl ??= $purpose === 'verify' ? 86400 : 1800;
     auth_query('DELETE FROM tokens WHERE expires < ? OR (user_id=? AND purpose=?)', [time(),$uid,$purpose]);
     $token = bin2hex(random_bytes(32));
     auth_query('INSERT INTO tokens(hash,user_id,purpose,value,expires) VALUES(?,?,?,?,?)', [hash('sha256',$token),$uid,$purpose,$value,time()+$ttl]);
@@ -161,7 +162,8 @@ function auth_mail(string $to, string $purpose, string $token): bool {
     $base = auth_test() ? 'http://' . $_SERVER['HTTP_HOST'] : AUTH_ORIGIN;
     // Fragment token is not sent to HTTP access logs or in the referrer.
     $url = $base . '/account.php?view=' . $views[$purpose] . '#token=' . $token;
-    $body = "Dobrý den,\n\n" . $titles[$purpose] . ":\n" . $url . "\n\nOdkaz platí 30 minut a lze jej použít pouze jednou.\nPokud jste o tuto akci nepožádali, zprávu ignorujte.\n\nJiří Janoušek\nMŮJ-DIP\ninfo@jirijanousek.cz\n";
+    $validity = $purpose === 'verify' ? '24 hodin' : '30 minut';
+    $body = "Dobrý den,\n\n" . $titles[$purpose] . ":\n" . $url . "\n\nOdkaz platí " . $validity . " a lze jej použít pouze jednou.\nPokud jste o tuto akci nepožádali, zprávu ignorujte.\n\nJiří Janoušek\nMŮJ-DIP\ninfo@jirijanousek.cz\n";
     if (auth_test()) return file_put_contents(auth_dir().'/test-outbox.jsonl', json_encode(['to'=>$to,'purpose'=>$purpose,'url'=>$url])."\n", FILE_APPEND|LOCK_EX) !== false;
     $subject = '=?UTF-8?B?' . base64_encode($titles[$purpose]) . '?=';
     return mail($to,$subject,$body,"From: MUJ-DIP <info@jirijanousek.cz>\r\nReply-To: info@jirijanousek.cz\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8");
