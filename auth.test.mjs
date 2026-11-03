@@ -97,7 +97,7 @@ try{
  ok((await admin.request('/admin.php',{action:'approval',user_id:'1',decision:'approved'})).status===303);
  await a.request('/account.php?view=login');ok((await a.request('/account.php?view=login',{action:'login',email:profile.email,password})).location==='/');
  ok((await a.request('/admin.php')).status===403);
- const userHome=await a.request('/');ok(userHome.html.includes('class="account-shortcut" href="/account.php?view=profile">Účet</a>')&&!userHome.html.includes('>Admin</a>'));
+ const userHome=await a.request('/');ok(userHome.html.includes('class="nav menu-account" href="/account.php?view=profile"')&&!userHome.html.includes('class="account-shortcut"')&&!userHome.html.includes('href="/admin.php"'));
  ok((await a.request('/account.php?view=profile',{action:'approval',user_id:'1',decision:'approved'})).status===403);
  await admin.request('/admin.php');
  ok((await admin.request('/admin.php',{action:'approval',user_id:'1',decision:'pending'})).status===303);
