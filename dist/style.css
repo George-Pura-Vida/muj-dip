@@ -105,3 +105,26 @@ header nav .menu-pages #print.menu-pdf{justify-content:flex-start;gap:9px}
 .plan-file-tools .format-label{display:flex;align-items:center;gap:10px;font-size:13px;margin:0}
 .plan-file-tools select{width:160px;margin:0;font-size:13px}
 @media(max-width:600px){.plan-file-tools{display:grid;grid-template-columns:1fr 1fr}.plan-file-tools .format-label{grid-column:1/-1;justify-content:space-between}.plan-file-tools .import input{display:none}.plan-file-tools #reset{grid-column:1/-1}}
+
+
+/* Compact burgundy calculator navigation: persistent above the form and its guide. */
+.toolbar{display:block;margin:12px 0 20px;border:0}
+.tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;width:100%;overflow:visible}
+.tabs button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;min-height:48px;padding:9px 8px;white-space:normal;text-align:center;line-height:1.2;background:#76283b;border:1px solid #59172b;border-radius:10px;color:#f5d7dd;font-size:10px;font-weight:700;letter-spacing:.03em;box-shadow:0 2px 6px #4d142018;cursor:pointer;transition:background .15s ease,border-color .15s ease}
+.tabs button>span{display:block;font-size:13px;font-weight:700;color:#fff8f8}
+.tabs button:hover{background:#601d30;border-color:#431020}
+.tabs button.active,.tabs button[aria-selected="true"]{background:#4c1426;border:1px solid #d7ae70;box-shadow:0 0 0 1px #d7ae70 inset,0 2px 6px #4d142024;color:#fff0f2}
+.tabs button.active>span,.tabs button[aria-selected="true"]>span{color:#fff}
+.tabs button:focus-visible{outline:3px solid #2563eb;outline-offset:3px}
+/* Same small, burgundy section buttons in the header menu. */
+header #topNav .menu-pages button[data-tab]{background:#76283b;border:1px solid #59172b;border-radius:9px;color:#fff8f8;min-height:44px;padding:8px 10px;font-size:12px;font-weight:700;box-shadow:none}
+header #topNav .menu-pages button[data-tab]:hover{background:#601d30;border-color:#431020}
+header #topNav .menu-pages button[data-tab].active{background:#4c1426;border-color:#d7ae70;color:#fff;box-shadow:inset 0 0 0 1px #d7ae70}
+header #topNav .menu-pages button[data-tab]:focus-visible{outline:3px solid #2563eb;outline-offset:3px}
+@media screen and (max-width:767px){
+  .toolbar{display:block!important;margin:12px 0 18px}
+  .tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%;overflow:visible}
+  .tabs button{min-height:46px;padding:8px 6px}
+  .tabs button>span{font-size:12px}
+}
+@media print{.toolbar{display:none!important}}

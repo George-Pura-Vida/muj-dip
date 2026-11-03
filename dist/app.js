@@ -1,5 +1,5 @@
 import {exportPdf} from './pdf.js?v=28';
-import './comparison.js?v=32';
+import './comparison.js?v=33';
 import './guide.js?v=30';
 import {excelBytes,importPlan,saveFile,payload} from './files.js?v=28';
 import {calculate,clean,DEFAULTS} from './engine.js?v=27';
