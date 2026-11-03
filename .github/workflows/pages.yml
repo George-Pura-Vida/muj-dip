@@ -18,7 +18,7 @@ jobs:
           node-version: '22'
       - run: npm test
       - run: node --check dist/app.js && node --check dist/comparison.js
-      - run: php -l dist/auth/mail.php && php -l dist/auth/bootstrap.php && php -l dist/support.php && php -l dist/admin.php && php -l dist/account.php && php -l dist/index.php && php -l dist/legal.php
+      - run: php -l dist/auth/mail.php && php -l dist/auth/bootstrap.php && php -l dist/support.php && php -l dist/admin.php && php -l dist/account.php && php -l dist/site-header.php && php -l dist/index.php && php -l dist/legal.php
       - run: php mail-templates.test.php
       - run: node auth.test.mjs
       - run: node --test approval-migration.test.mjs

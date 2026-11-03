@@ -1,12 +1,13 @@
 <?php
 declare(strict_types=1);
 require __DIR__.'/auth/bootstrap.php';
-auth_headers();
+auth_boot();
+try {$user=auth_user();} catch(Throwable $e) {$user=null;}
 $pages=['terms'=>'Podmínky používání aplikace','privacy'=>'Ochrana osobních údajů (GDPR)','cookies'=>'Cookies a místní úložiště','legal'=>'Právní upozornění'];
 $view=is_string($_GET['view']??null)&&isset($pages[$_GET['view']])?$_GET['view']:'legal';
 ?>
-<!doctype html><html lang="cs"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= h($pages[$view]) ?> · MŮJ-DIP</title><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="stylesheet" href="/account.css?v=4"><link rel="stylesheet" href="/privacy.css?v=1"><script type="module" src="/privacy.js?v=1"></script></head><body>
-<header class="account-header"><a class="brand" href="/">MŮJ-DIP<small>Jiří Janoušek</small></a><nav class="account-top-nav" aria-label="Přístup k účtu"><a href="/account.php?view=login">Přihlášení / Můj účet</a><a href="/account.php?view=register">Registrace</a></nav></header>
+<!doctype html><html lang="cs"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= h($pages[$view]) ?> · MŮJ-DIP</title><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="stylesheet" href="/account.css?v=4"><link rel="stylesheet" href="/privacy.css?v=1"><script type="module" src="/privacy.js?v=1"></script><link rel="stylesheet" href="/navigation.css?v=5"><script type="module" src="/site-menu.js?v=1"></script></head><body>
+<?php require __DIR__.'/site-header.php'; ?>
 <main class="legal-page"><h1><?= h($pages[$view]) ?></h1><p class="legal-version">Verze pro aplikaci MŮJ-DIP · 3. listopadu 2026</p>
 <section><h2>Provozovatel a kontakt</h2><p>Jiří Janoušek, fyzická osoba podnikající, IČO 13798804. Sídlo: Ke Kotlářce 1146/12, 150 00 Praha 5 – Košíře. E-mail: <a href="mailto:info@jirijanousek.cz">info@jirijanousek.cz</a>, telefon <a href="tel:+420777796148">+420 777 796 148</a>. Konzultační adresa Václavské náměstí 1282/51, Praha 1 je odlišná od sídla.</p></section>
 <?php if($view==='terms'): ?>

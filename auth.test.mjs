@@ -28,13 +28,14 @@ function ok(value){assert.ok(value);checks++;}
 async function mailToken(purpose){const lines=(await readFile(join(dir,'var/accounts/test-outbox.jsonl'),'utf8')).trim().split('\n').map(JSON.parse);return new URL(lines.filter(x=>x.purpose===purpose).at(-1).url).hash.slice(7);}
 try{
  let ready=false;for(let i=0;i<60;i++){try{await a.request('/account.php');ready=true;break;}catch{await new Promise(r=>setTimeout(r,100));}}assert.ok(ready,logs);
- const publicSupport=await a.request('/support.php?welcome=1');ok(publicSupport.status===200&&!publicSupport.html.includes('Váš účet je aktivní a jste přihlášeni.')&&publicSupport.html.includes('223366333/2010'));
+ function hasSharedMenu(html){const menu=html.match(/<nav id="topNav"[\s\S]*?<\/nav>/)?.[0]||'';return html.includes('id="menuToggle"')&&['/?tab=plan','/?tab=company','/?tab=comparison','/?tab=method','/support.php','/#kontakt'].every(url=>menu.includes('href="'+url+'"'));}
+ const publicSupport=await a.request('/support.php?welcome=1');ok(hasSharedMenu(publicSupport.html)&&publicSupport.html.includes('>Registrace</span>')&&!publicSupport.html.includes('Odhlásit se'));ok(publicSupport.status===200&&!publicSupport.html.includes('Váš účet je aktivní a jste přihlášeni.')&&publicSupport.html.includes('223366333/2010'));
  ok((await a.request('/')).status===303);
  ok((await a.request('/index.html')).status===303);
  ok((await a.request('/auth/bootstrap.php')).status===403);
- for(const legalView of ['terms','privacy','cookies','legal']){const legal=await b.request('/legal.php?view='+legalView);ok(legal.status===200&&legal.html.includes('IČO 13798804')&&legal.html.includes('data-cookie-settings'));}
+ for(const legalView of ['terms','privacy','cookies','legal']){const legal=await b.request('/legal.php?view='+legalView);ok(legal.status===200&&legal.html.includes('IČO 13798804')&&legal.html.includes('data-cookie-settings')&&hasSharedMenu(legal.html));}
  const legacyPrivacy=await b.request('/account.php?view=privacy');ok(legacyPrivacy.location==='/legal.php?view=privacy');
- const registration=await a.request('/account.php?view=register');
+ const registration=await a.request('/account.php?view=register');ok(hasSharedMenu(registration.html));
  for(const field of ['phone','address']){const input=registration.html.match(new RegExp('<input[^>]*name="'+field+'"[^>]*>'))?.[0];assert.ok(input&&/\brequired\b/.test(input)===(field==='phone'),'Required phone, optional address: '+field);}
 
  ok(registration.headers.get('referrer-policy')==='same-origin');
@@ -88,7 +89,10 @@ try{
  await admin.request('/account.php?view=profile');
  await admin.request('/account.php?view=login');ok((await admin.request('/account.php?view=login',{action:'login',email:adminProfile.email,password})).location==='/');
  const adminHome=await admin.request('/');ok(adminHome.html.includes('href="/admin.php"')&&adminHome.html.includes('Správa uživatelů')&&adminHome.html.includes('class="nav menu-account"')&&!adminHome.html.includes('class="account-shortcut"')&&adminHome.html.includes('Odhlásit se'));
- const panel=await admin.request('/admin.php');ok(panel.status===200&&panel.html.includes(profile.email)&&panel.html.includes('class="admin-table"'));
+ const panel=await admin.request('/admin.php');ok(hasSharedMenu(panel.html)&&panel.html.includes('Správa uživatelů')&&panel.html.includes('Odhlásit se'));
+ const signedSupport=await admin.request('/support.php');ok(hasSharedMenu(signedSupport.html)&&signedSupport.html.includes('Správa uživatelů')&&signedSupport.html.includes('Můj účet')&&signedSupport.html.includes('Odhlásit se'));
+ const signedLegal=await admin.request('/legal.php');ok(hasSharedMenu(signedLegal.html)&&signedLegal.html.includes('Správa uživatelů'));
+ok(panel.status===200&&panel.html.includes(profile.email)&&panel.html.includes('class="admin-table"'));
  const legacy=await admin.request('/account.php?view=approvals');ok(legacy.status===303&&legacy.location==='/admin.php');
  const filtered=await admin.request('/admin.php?q=nomatch123');ok(filtered.html.includes('Žádný účet neodpovídá')&&!filtered.html.includes(profile.email));
  const byPhone=await admin.request('/admin.php?q='+encodeURIComponent(profile.phone));ok(byPhone.html.includes(profile.email));

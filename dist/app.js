@@ -69,3 +69,9 @@ const compactMenu=window.matchMedia('(max-width:1439px)');compactMenu.addEventLi
 let lastChartWidth=0;new ResizeObserver(entries=>{const width=Math.round(entries[0].contentRect.width);if(width>0&&width!==lastChartWidth){lastChartWidth=width;if(result)drawChart(result);}}).observe($('chart'));
 
 
+
+// Direct navigation from the shared menu on secondary pages.
+const entryParams=new URLSearchParams(location.search);
+const entryTab=entryParams.get('tab');
+if(['plan','company','comparison','method'].includes(entryTab))tab(entryTab);
+if(entryParams.get('download')==='pdf')$('print').click();
