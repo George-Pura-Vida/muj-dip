@@ -29,7 +29,12 @@ svg+=`<polyline points="${line(p=>p.value)}" fill="none" stroke="#2563eb" stroke
 svg+=`<polyline points="${line(p=>p.real)}" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-dasharray="7 4" stroke-linejoin="round"><title>Po inflaci: ${fmt(r.end.real)}</title></polyline><circle cx="${x(r.s.years)}" cy="${y(r.end.real)}" r="4" fill="#dc2626" stroke="white" stroke-width="2"/>`;
 const ticks=[...new Set(W<480?[0,Math.round(r.s.years/2),r.s.years]:[0,Math.round(r.s.years/4),Math.round(r.s.years/2),Math.round(r.s.years*3/4),r.s.years])];for(const tick of ticks)svg+=`<text x="${x(tick)}" y="${H-7}" text-anchor="${tick===0?'start':tick===r.s.years?'end':'middle'}" font-size="11" fill="#827253">${years(tick)}</text>`;svg+='</svg>';$('chart').innerHTML=svg;$('chart').setAttribute('aria-label',`Hodnota DIP za ${years(r.s.years)}: ${fmt(r.end.value)}; po inflaci ${fmt(r.end.real)}; vklady ${fmt(r.end.own+r.end.employer)}.`);}
 function tab(name){for(const el of document.querySelectorAll('.panel'))el.hidden=el.id!==name;for(const el of document.querySelectorAll('[data-tab]')){const active=el.dataset.tab===name;el.classList.toggle('active',active);if(el.getAttribute('role')==='tab')el.setAttribute('aria-selected',String(active));}}
-for(const el of document.querySelectorAll('[data-tab]'))el.addEventListener('click',()=>tab(el.dataset.tab));
+function scrollToCalculator(){
+ const target=document.querySelector('.quick-start')||document.querySelector('.toolbar');
+ if(!target)return;
+ requestAnimationFrame(()=>{const headerHeight=document.querySelector('body>header')?.getBoundingClientRect().height||0;const top=target.getBoundingClientRect().top+window.scrollY-headerHeight-12;window.scrollTo({top:Math.max(0,top),behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});});
+}
+for(const el of document.querySelectorAll('[data-tab]'))el.addEventListener('click',()=>{tab(el.dataset.tab);scrollToCalculator();});
 for(const el of document.querySelectorAll('[data-key]')){const handler=()=>{if(el.type==='number'&&!el.checkValidity())return;const value=el.dataset.key==='mode'?el.value:Number(el.value);state=clean({...state,[el.dataset.key]:value});for(const peer of document.querySelectorAll(`[data-key="${el.dataset.key}"]`))if(peer!==el)peer.value=state[el.dataset.key];render();};el.addEventListener('input',handler);el.addEventListener('change',()=>{state=clean({...state,[el.dataset.key]:el.dataset.key==='mode'?el.value:Number(el.value)});sync();render();});}
 for(const b of document.querySelectorAll('[data-own]'))b.addEventListener('click',()=>{state.own=Number(b.dataset.own);sync();render();});
 function download(name,text,type){const url=URL.createObjectURL(new Blob([text],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
@@ -73,5 +78,5 @@ let lastChartWidth=0;new ResizeObserver(entries=>{const width=Math.round(entries
 // Direct navigation from the shared menu on secondary pages.
 const entryParams=new URLSearchParams(location.search);
 const entryTab=entryParams.get('tab');
-if(['plan','company','comparison','method'].includes(entryTab))tab(entryTab);
+if(['plan','company','comparison','method'].includes(entryTab)){tab(entryTab);if(document.readyState==='complete')scrollToCalculator();else window.addEventListener('load',scrollToCalculator,{once:true});}
 if(entryParams.get('download')==='pdf')$('print').click();
