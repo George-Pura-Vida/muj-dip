@@ -1,5 +1,5 @@
 /* Compact right-aligned hamburger navigation on desktop, tablet and phone. */
-body>header{position:relative;z-index:50;box-sizing:border-box;width:100%;max-width:none;margin:0;background:#fff;border-bottom:1px solid #e1d2b4;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:16px;height:auto;min-height:80px;padding:16px max(20px,calc((100vw - 1440px)/2))}
+body>header{position:sticky;top:0;z-index:50;box-sizing:border-box;width:100%;max-width:none;margin:0;background:#fff;border-bottom:1px solid #e1d2b4;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:16px;height:auto;min-height:80px;padding:16px max(20px,calc((100vw - 1440px)/2))}
 body>header>.brand{grid-column:1;grid-row:1;justify-self:start}
 body>header>.account-shortcut{display:none!important}
 body>header #menuToggle{display:inline-flex;grid-column:2;grid-row:1;align-items:center;justify-content:center;gap:9px;min-width:104px;min-height:46px;padding:10px 15px;border:1px solid #c4a060;border-radius:10px;background:#e8d7ad;color:#392d1c;font:700 14px/1.3 var(--font,Arial,sans-serif);box-shadow:none}
@@ -20,6 +20,8 @@ header #topNav .nav-logout{display:flex!important;width:100%;margin:10px 0 0;pad
 header #topNav .nav-logout .nav{display:flex;align-items:center;justify-content:flex-start;gap:10px;width:100%;min-height:48px;padding:8px 12px;margin:0;border:1px solid #d2bc91;border-radius:9px;background:#f1e7d2;color:#67563a;font:600 14px/1.3 var(--font,Arial,sans-serif)}
 header #topNav .nav-logout .nav:hover{background:#e8d7ad}
 @media(max-width:479px){body>header{min-height:76px;padding:14px 16px;gap:12px}body>header #menuToggle{min-width:94px;min-height:44px;padding:9px 12px}header #topNav.menu-open{right:12px;top:calc(100% + 6px);width:340px;max-height:calc(100dvh - 104px);padding:10px}header #topNav .menu-pages :is(.nav,#print),header #topNav .menu-pages #print.menu-pdf{font-size:14px}}
-@media print{header #topNav,body>header #menuToggle{display:none!important}}
+@media print{body>header{position:static}header #topNav,body>header #menuToggle{display:none!important}}
 
 body>header #menuToggle .menu-lines{display:inline-flex;align-items:center;justify-content:center;width:22px;font-size:22px;line-height:1}
+
+html{scroll-padding-top:96px}#kontakt{scroll-margin-top:96px}
