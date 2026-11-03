@@ -1,0 +1,9 @@
+/* Original MŮJ-DIP artwork, shared by the entry page and calculator. */
+.dip-home-banner{display:block;width:100%;border-radius:18px;overflow:hidden;text-decoration:none;line-height:0}
+.dip-home-banner img{display:block;width:100%;height:auto}
+.dip-home-banner:focus-visible{outline:3px solid #a60d22;outline-offset:5px}
+.dip-home-intro{padding:32px 0 24px}
+.account-layout{max-width:1440px;grid-template-columns:minmax(0,1.4fr) minmax(360px,1fr);gap:36px}
+.welcome .dip-home-banner{margin:24px 0}
+@media(max-width:850px){.account-layout{max-width:740px;grid-template-columns:1fr;gap:16px}.dip-home-intro{padding:22px 0 18px}.welcome .dip-home-banner{margin:20px 0}.dip-home-banner{border-radius:12px}}
+@media print{.dip-home-intro{display:none}}
