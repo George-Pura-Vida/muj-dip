@@ -23,5 +23,5 @@ test('support is optional, public and reachable from navigation',async()=>{
  const [page,index]=await Promise.all(['dist/support.php','dist/index.html'].map(p=>readFile(new URL(p,import.meta.url),'utf8')));
  assert.ok(page.includes('Používání aplikace není platbou podmíněno.'));assert.ok(page.includes('Pokračovat do aplikace bez příspěvku'));
  assert.ok(page.includes(payment.account)&&page.includes('CZ82 2010 0000 0002 2336 6333'));assert.ok(!page.includes('auth_require()'));
- assert.ok(index.includes('class="nav menu-support" href="/support.php"'));assert.ok(index.includes('💛 Podpořit Můj DIP'));
+ assert.ok(index.includes('class="nav menu-support" href="/support.php"'));assert.ok(index.replace(/<[^>]*>/g,'').includes('💛 Podpořit Můj DIP'));
 });
