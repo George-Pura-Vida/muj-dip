@@ -26,3 +26,11 @@ test('visible compact burgundy tabs remain usable on mobile',()=>{
   assert.match(css,/@media screen and \(max-width:767px\)\{\s*\.toolbar\{display:block!important/);
   assert.match(css,/\.tabs\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
 });
+
+test('banner omits redundant interest call to action while keeping disclaimers',()=>{
+  const svg=read('./dist/dip-home.svg');
+  assert.doesNotMatch(svg,/MÁM ZÁJEM|Společně sestavíme váš modelový plán/);
+  assert.match(svg,/Investiční výnos není zaručen/);
+  assert.match(svg,/viewBox="0 0 1672 870"/);
+  assert.match(html,/dip-home\.svg\?v=3/);
+});
