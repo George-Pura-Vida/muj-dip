@@ -28,6 +28,7 @@ function ok(value){assert.ok(value);checks++;}
 async function mailToken(purpose){const lines=(await readFile(join(dir,'var/accounts/test-outbox.jsonl'),'utf8')).trim().split('\n').map(JSON.parse);return new URL(lines.filter(x=>x.purpose===purpose).at(-1).url).hash.slice(7);}
 try{
  let ready=false;for(let i=0;i<60;i++){try{await a.request('/account.php');ready=true;break;}catch{await new Promise(r=>setTimeout(r,100));}}assert.ok(ready,logs);
+ const publicSupport=await a.request('/support.php?welcome=1');ok(publicSupport.status===200&&!publicSupport.html.includes('Váš účet je aktivní a jste přihlášeni.')&&publicSupport.html.includes('223366333/2010'));
  ok((await a.request('/')).status===303);
  ok((await a.request('/index.html')).status===303);
  ok((await a.request('/auth/bootstrap.php')).status===403);
@@ -67,7 +68,8 @@ try{
  const lifetimes=spawnSync(php,[...args,'-r',`require ${JSON.stringify(join(dir,'dist/auth/bootstrap.php').replaceAll('\\\\','/'))}; echo auth_query("SELECT expires FROM tokens WHERE purpose='verify' LIMIT 1")->fetchColumn()-time();`],{encoding:'utf8'});
  assert.equal(lifetimes.status,0,lifetimes.stderr);ok(Number(lifetimes.stdout)>86300&&Number(lifetimes.stdout)<=86400);
  await a.request('/account.php?view=verify');
- const verifiedResponse=await a.request('/account.php?view=verify',{action:'verify',token:verify});ok(verifiedResponse.status===303&&verifiedResponse.location==='/');
+ const verifiedResponse=await a.request('/account.php?view=verify',{action:'verify',token:verify});ok(verifiedResponse.status===303&&verifiedResponse.location==='/support.php?welcome=1');
+ const welcome=await a.request('/support.php?welcome=1');ok(welcome.status===200&&welcome.html.includes('Váš účet je aktivní a jste přihlášeni.')&&welcome.html.includes('Pokračovat do aplikace'));
  ok((await a.request('/')).status===200);await a.request('/account.php?view=profile');
  await a.request('/account.php?view=verify');ok((await a.request('/account.php?view=verify',{action:'verify',token:verify})).status===200);
  // Verification immediately enables login; explicit administrator restrictions still apply.
@@ -82,7 +84,7 @@ try{
  ok((await admin.request('/account.php?view=register',{action:'register',...adminProfile,password,password_confirm:password,privacy:'yes'})).status===303);
  await admin.request('/account.php?view=login');ok((await admin.request('/account.php?view=login',{action:'login',email:adminProfile.email,password})).status===200);
  const adminToken=await mailToken('verify');await admin.request('/account.php?view=verify');
- ok((await admin.request('/account.php?view=verify',{action:'verify',token:adminToken})).location==='/');
+ ok((await admin.request('/account.php?view=verify',{action:'verify',token:adminToken})).location==='/support.php?welcome=1');
  await admin.request('/account.php?view=profile');
  await admin.request('/account.php?view=login');ok((await admin.request('/account.php?view=login',{action:'login',email:adminProfile.email,password})).location==='/');
  const adminHome=await admin.request('/');ok(adminHome.html.includes('class="account-shortcut" href="/admin.php">Admin</a>')&&adminHome.html.includes('Odhlásit se'));

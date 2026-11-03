@@ -213,7 +213,7 @@ function auth_process(?array $u): void {
         if($verifiedUser && auth_approved($verifiedUser)) {
             if(!auth_is_admin($verifiedUser)) auth_notify_access($verifiedUser,'approved');
             auth_login($verifiedUser);
-            header('Location: /',true,303);exit;
+            header('Location: /support.php?welcome=1',true,303);exit;
         }
         auth_redirect('login','E-mail byl ověřen, ale přístup k účtu je omezen správcem. Kontaktujte nás na info@jirijanousek.cz.');
     }
