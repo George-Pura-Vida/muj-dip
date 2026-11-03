@@ -14,10 +14,12 @@ header #topNav .menu-pages :is(.nav,#print).active{background:#481827;border-col
 header #topNav .menu-pages :is(.nav,#print):focus-visible{outline:3px solid #2563eb;outline-offset:2px}
 header #topNav .menu-pages :is(.nav,#print) .nav-label{color:inherit;font:inherit;line-height:1.3;white-space:normal}
 header #topNav .menu-pages :is(.nav,#print) .ui-icon,header #topNav .nav-logout .ui-icon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 30px;width:30px;height:30px;margin:0;padding:0;border:1px solid #e8d9b6;border-radius:8px;background:#fff3d9;color:#60441f;font-size:20px;line-height:1;box-shadow:none}
-header #topNav .menu-pages :is(a.menu-support,a.menu-account,a.menu-contact,.menu-pdf){background:#e8d7ad;color:#392d1c;border-color:#c5a56b}
-header #topNav .menu-pages :is(a.menu-support,a.menu-account,a.menu-contact,.menu-pdf):hover{background:#dcc38d;border-color:#ad8744}
+header #topNav .menu-pages :is(a.menu-support,a.menu-account,a.menu-contact,a.menu-pdf,#print.menu-pdf){background:#e8d7ad;color:#392d1c;border-color:#c5a56b}
+header #topNav .menu-pages :is(a.menu-support,a.menu-account,a.menu-contact,a.menu-pdf,#print.menu-pdf):hover{background:#dcc38d;border-color:#ad8744}
 header #topNav .nav-logout{display:flex!important;width:100%;margin:10px 0 0;padding:10px 0 0;border-top:1px solid #e1d2b4;order:99}
 header #topNav .nav-logout .nav{display:flex;align-items:center;justify-content:flex-start;gap:10px;width:100%;min-height:48px;padding:8px 12px;margin:0;border:1px solid #d2bc91;border-radius:9px;background:#f1e7d2;color:#67563a;font:600 14px/1.3 var(--font,Arial,sans-serif)}
 header #topNav .nav-logout .nav:hover{background:#e8d7ad}
 @media(max-width:479px){body>header{min-height:76px;padding:14px 16px;gap:12px}body>header #menuToggle{min-width:94px;min-height:44px;padding:9px 12px}header #topNav.menu-open{right:12px;top:calc(100% + 6px);width:340px;max-height:calc(100dvh - 104px);padding:10px}header #topNav .menu-pages :is(.nav,#print),header #topNav .menu-pages #print.menu-pdf{font-size:14px}}
 @media print{header #topNav,body>header #menuToggle{display:none!important}}
+
+body>header #menuToggle .menu-lines{display:inline-flex;align-items:center;justify-content:center;width:22px;font-size:22px;line-height:1}
