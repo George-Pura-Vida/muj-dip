@@ -16,7 +16,7 @@ https://muj-dip.jirijanousek.cz/account.php?view=verify#token={JEDNORAZOVY_TOKEN
 
 ⏳ Odkaz platí 24 hodin a lze jej použít pouze jednou.
 
-✅ Po otevření odkazu potvrďte e-mail tlačítkem na stránce. Přístup se aktivuje automaticky, bez čekání na správce. Poté se můžete přihlásit.
+✅ Otevřením odkazu se Váš e-mail automaticky potvrdí, přístup se aktivuje a aplikace Vás rovnou přihlásí. Na schválení správcem nečekáte a žádné další tlačítko mačkat nemusíte.
 
 🔄 Pokud platnost odkazu vypršela, vyžádejte si nový:
 https://muj-dip.jirijanousek.cz/account.php?view=forgot
@@ -111,7 +111,7 @@ v aplikaci MŮJ-DIP se zaregistroval nový uživatel. Tato zpráva je pouze info
 ✅ Přístup se aktivuje automaticky, jakmile uživatel potvrdí svůj e-mail. Zadání telefonu samo o sobě nepotvrzuje vlastnictví čísla.
 
 🔗 Správa uživatelů:
-https://muj-dip.jirijanousek.cz/account.php?view=approvals
+https://muj-dip.jirijanousek.cz/admin.php
 
 Po přihlášení správcovským účtem můžete zkontrolovat údaje nebo podle potřeby omezit přístup. Odkaz do správy sám o sobě uživatele neaktivuje. Zpráva neobsahuje heslo ani aktivační token uživatele.
 

@@ -19,7 +19,7 @@ foreach(['verify','reset','email','admin-registration','approved','rejected','pe
   check($m['url']===$base.'/account.php?view='.$view.'#token='.$token,'canonical token URL');
   check(str_contains($m['body'],$purpose==='verify'?'24 hodin':'30 minut'),'expiry');
  }else check(!str_contains($m['body'],$token),'no leaked token');
- if($purpose==='verify')check(str_contains($m['body'],'bez čekání'),'automatic activation');
+ if($purpose==='verify')check(str_contains($m['body'],'rovnou přihlásí'),'automatic activation');
  if($purpose==='admin-registration')check(str_contains($m['body'],'+420 777 123 456'),'phone for operator');
 }
 foreach([['verify',['token'=>'bad']],['missing',[]]]as[$purpose,$data]){

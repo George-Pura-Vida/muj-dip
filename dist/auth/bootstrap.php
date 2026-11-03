@@ -94,7 +94,7 @@ function auth_logout(): void {
 }
 function auth_redirect(string $view = 'login', string $message = ''): never {
     if ($message !== '') $_SESSION['flash'] = $message;
-    header('Location: /account.php?view=' . rawurlencode($view), true, 303); exit;
+    header('Location: ' . ($view === 'approvals' ? '/admin.php' : '/account.php?view=' . rawurlencode($view)), true, 303); exit;
 }
 function auth_csrf(): void {
     if (!is_string($_POST['csrf'] ?? null) || !hash_equals($_SESSION['csrf'], $_POST['csrf'])) {
@@ -210,8 +210,12 @@ function auth_process(?array $u): void {
         $verifiedId = null;
         auth_consume('verify',function($t)use(&$verifiedId){auth_query('UPDATE users SET verified=1,updated_at=? WHERE id=?',[time(),$t['user_id']]);$verifiedId=(int)$t['user_id'];});
         $verifiedUser=auth_query('SELECT * FROM users WHERE id=?',[$verifiedId])->fetch(PDO::FETCH_ASSOC);
-        if($verifiedUser && auth_approved($verifiedUser) && !auth_is_admin($verifiedUser)) auth_notify_access($verifiedUser,'approved');
-        auth_redirect('login','E-mail byl ověřen. Pokud Váš účet nemá omezení od správce, přístup je nyní aktivní a můžete se přihlásit.');
+        if($verifiedUser && auth_approved($verifiedUser)) {
+            if(!auth_is_admin($verifiedUser)) auth_notify_access($verifiedUser,'approved');
+            auth_login($verifiedUser);
+            header('Location: /',true,303);exit;
+        }
+        auth_redirect('login','E-mail byl ověřen, ale přístup k účtu je omezen správcem. Kontaktujte nás na info@jirijanousek.cz.');
     }
     if ($action === 'reset') {
         auth_limit('reset-ip',$ip,20,1800);$hash=auth_hash(auth_password());
@@ -219,6 +223,26 @@ function auth_process(?array $u): void {
         auth_logout();auth_redirect('login','Heslo bylo změněno a všechna přihlášení ukončena. Přihlaste se novým heslem.');
     }
     if (!$u) { http_response_code(401);throw new DomainException('Nejprve se přihlaste.'); }
+    if ($action === 'delete-account') {
+        if (!auth_is_admin($u)) { http_response_code(403); throw new DomainException('Účet může smazat pouze správce.'); }
+        $target=auth_text('user_id',20,true);
+        if (!ctype_digit($target)) throw new DomainException('Neplatný účet.');
+        if (auth_text('confirm_delete',3) !== 'yes') throw new DomainException('Potvrďte nevratné smazání účtu.');
+        $confirmation=strtolower(auth_text('confirm_email',254,true));
+        $db=auth_db(); $db->exec('BEGIN IMMEDIATE');
+        try {
+            $targetUser=auth_query('SELECT * FROM users WHERE id=?',[(int)$target])->fetch(PDO::FETCH_ASSOC);
+            if (!$targetUser) throw new DomainException('Tento účet již neexistuje.');
+            if (strtolower($targetUser['email'])===AUTH_APPROVER_EMAIL || (int)$target===(int)$u['id']) throw new DomainException('Správcovský ani vlastní účet nelze smazat.');
+            if (!hash_equals(strtolower($targetUser['email']),$confirmation)) throw new DomainException('Pro potvrzení opište přesnou e-mailovou adresu účtu.');
+            auth_query('DELETE FROM approval_audit WHERE user_id=? OR actor_id=?',[(int)$target,(int)$target]);
+            foreach (['login-email','recovery-email'] as $scope) auth_query('DELETE FROM limits WHERE key=?',[hash('sha256',$scope.':'.$targetUser['email'])]);
+            // Foreign-key cascade removes verification, reset and email-change tokens.
+            auth_query('DELETE FROM users WHERE id=?',[(int)$target]);
+            $db->exec('COMMIT');
+        } catch (Throwable $e) { $db->exec('ROLLBACK'); throw $e; }
+        auth_redirect('approvals','Účet a jeho údaje byly trvale smazány. Původní přihlášení a ověřovací odkazy již nelze použít.');
+    }
     if ($action === 'approval') {
         if (!auth_is_admin($u)) { http_response_code(403); throw new DomainException('Tuto akci může provést pouze správce.'); }
         $target=auth_text('user_id',20,true); $decision=auth_text('decision',20,true);

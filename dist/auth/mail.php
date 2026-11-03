@@ -15,7 +15,7 @@ function auth_email_template(string $purpose, string $base, array $data = []): a
         $url = $base.'/account.php?view='.$routes[$purpose].'#token='.$token;
     } else {
         $url = match ($purpose) {
-            'admin-registration' => $base.'/account.php?view=approvals',
+            'admin-registration' => $base.'/admin.php',
             'approved' => $base.'/account.php?view=login',
             default => 'https://jirijanousek.cz/#kontakt',
         };

@@ -21,3 +21,10 @@ document.querySelectorAll('[data-token-form]').forEach(form=>{
     form.before(note);form.querySelector('button[type="submit"]').disabled=true;
   }
 });
+
+
+// Only the email-verification form submits automatically. Reset and email changes remain explicit.
+if(token&&/^[a-f0-9]{64}$/.test(token)){
+  const verification=document.querySelector('[data-auto-verify]');
+  if(verification)verification.requestSubmit();
+}

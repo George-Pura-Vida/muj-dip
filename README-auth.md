@@ -17,7 +17,7 @@ Local integration tests run PHP's development server bound to 127.0.0.1 with MUJ
 
 
 ## Owner approval
-Only the verified jgjanousek@gmail.com account can open /account.php?view=approvals. It can list paginated registered users, inspect their profile fields, approve, reject or revoke access. New registrations are pre-approved and gain access immediately after email verification. Phone is required for subsequent operator contact verification; no SMS verification is implemented. The administrator email cannot be changed through the profile form.
+Only the verified jgjanousek@gmail.com account can open /admin.php. It can list paginated registered users, inspect their profile fields, approve, reject or revoke access. New registrations are pre-approved and gain access immediately after email verification. Phone is required for subsequent operator contact verification; no SMS verification is implemented. The administrator email cannot be changed through the profile form.
 
 Previously waiting accounts with no administrator decision migrate to approved; explicit administrator restrictions are preserved. The verified owner account remains able to administer them. Every approval decision is recorded in the private SQLite audit table, and increments the target account session version. Revoked sessions fail their next authenticated request. Exported files and a page already loaded in a browser cannot be remotely erased. Investment calculation code is client-side and public static assets are not DRM.
 
@@ -31,3 +31,8 @@ Each successfully created new account triggers one plain-text notification to AU
 
 ## Process mail templates
 Seven UTF-8 plain-text templates live in dist/auth/mail-templates.json. See docs/procesni-emaily.md for previews. Single-use verification, reset and email-change links retain token fragments. Access changes notify verified users; mail failure does not roll back security decisions. Subjects use RFC 2047 encoding, and messages share greeting, readable action URL, expiry, support contact and footer.
+
+## Admin table and permanent deletion
+/admin.php is restricted to the verified configured owner. It offers a paginated, searchable user table. The legacy approvals URL redirects after checking authorization. Permanent deletion requires CSRF, same-origin POST, exact target email and explicit confirmation. It protects the owner and current account, deletes profile and access history, and cascades all one-time tokens. Every subsequent authenticated request rejects the removed user. Browser-local plans, user exports and hosting backups are not erased by account deletion. No production user is deleted during automated tests.
+
+Verification links now automatically submit the verification POST in the browser and log the verified permitted user into a fresh session, redirecting to /. A plain GET without the fragment does not consume the token. Reset and email-change forms do not auto-submit. Expired/replayed tokens and administrator restrictions cannot create a login. A no-JavaScript fallback button remains available.
