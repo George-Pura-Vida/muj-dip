@@ -22,7 +22,7 @@ class Client{
  }
 }
 const a=new Client(),b=new Client();
-const profile={first_name:'Test',last_name:'Uživatel',company:'Test firma',ico:'12345678',dic:'CZ12345678',phone:'',address:'',email:'integration@example.invalid'};
+const profile={first_name:'Test',last_name:'Uživatel',company:'Test firma',ico:'12345678',dic:'CZ12345678',phone:'+420 777 123 456',address:'',email:'integration@example.invalid'};
 const password='Test123';let checks=0;
 function ok(value){assert.ok(value);checks++;}
 async function mailToken(purpose){const lines=(await readFile(join(dir,'var/accounts/test-outbox.jsonl'),'utf8')).trim().split('\n').map(JSON.parse);return new URL(lines.filter(x=>x.purpose===purpose).at(-1).url).hash.slice(7);}
@@ -34,22 +34,23 @@ try{
  for(const legalView of ['terms','privacy','cookies','legal']){const legal=await b.request('/legal.php?view='+legalView);ok(legal.status===200&&legal.html.includes('IČO 13798804')&&legal.html.includes('data-cookie-settings'));}
  const legacyPrivacy=await b.request('/account.php?view=privacy');ok(legacyPrivacy.location==='/legal.php?view=privacy');
  const registration=await a.request('/account.php?view=register');
- for(const field of ['phone','address']){const input=registration.html.match(new RegExp('<input[^>]*name="'+field+'"[^>]*>'))?.[0];assert.ok(input&&!/\brequired\b/.test(input),'Optional profile contact: '+field);}
+ for(const field of ['phone','address']){const input=registration.html.match(new RegExp('<input[^>]*name="'+field+'"[^>]*>'))?.[0];assert.ok(input&&/\brequired\b/.test(input)===(field==='phone'),'Required phone, optional address: '+field);}
 
  ok(registration.headers.get('referrer-policy')==='same-origin');
  ok(registration.html.includes('name="referrer" content="same-origin"'));
  ok(registration.html.includes('minlength="7"'));
  ok(registration.html.includes('/privacy.js?v=1')&&registration.html.includes('Podmínky používání')&&registration.html.includes('Ochrana údajů / GDPR'));
- ok(registration.html.includes('Aktivace přístupu má dva kroky:')&&registration.html.includes('Z bezpečnostních důvodů poté vyčkejte'));
- const loginNotice=await a.request('/account.php?view=login');ok(loginNotice.html.includes('Z bezpečnostních důvodů není účet aktivován automaticky.'));
+ ok(registration.html.includes('Aktivace bez čekání:')&&registration.html.includes('Přístup se aktivuje automaticky.'));
+ const loginNotice=await a.request('/account.php?view=login');ok(loginNotice.html.includes('Po potvrzení e-mailu se Váš přístup aktivuje automaticky.'));
  const ownerNotice=await a.request('/account.php?view=register');
  ok((await a.request('/account.php?view=register',{action:'register',...profile,password,password_confirm:password,privacy:'yes',csrf:'invalid'})).status===403);
+ for(const phone of ['', '------', '+1234567890123456']) {const invalidPhone=await a.request('/account.php?view=register',{action:'register',...profile,phone,password,password_confirm:password,privacy:'yes'});ok(invalidPhone.status===200&&!invalidPhone.location);}
  const reg=await a.request('/account.php?view=register',{action:'register',...profile,password,password_confirm:password,privacy:'yes'});ok(reg.status===303);
  ok(!(await readFile(join(dir,'var/accounts/accounts.sqlite'))).includes(Buffer.from(password)));
  const notifications=async()=> (await readFile(join(dir,'var/accounts/test-outbox.jsonl'),'utf8')).trim().split('\n').map(JSON.parse).filter(x=>x.purpose==='admin-registration');
  const alerts=await notifications();ok(alerts.length===1);
  ok(alerts[0].to==='jgjanousek@gmail.com'&&alerts[0].subject.includes('Nová registrace'));
- ok(alerts[0].body.includes(profile.email)&&alerts[0].body.includes(profile.first_name+' '+profile.last_name)&&alerts[0].body.includes(profile.company));
+ ok(alerts[0].body.includes(profile.email)&&alerts[0].body.includes(profile.first_name+' '+profile.last_name)&&alerts[0].body.includes(profile.company)&&alerts[0].body.includes(profile.phone));
  ok(alerts[0].url===base+'/account.php?view=approvals'&&!alerts[0].url.includes('token='));
  ok(!alerts[0].body.includes(password)&&!alerts[0].body.includes(await mailToken('verify')));
  // Duplicate registration does not send another administrator alert.
@@ -60,18 +61,21 @@ try{
  await a.request('/account.php?view=login');
  ok((await a.request('/account.php?view=login',{action:'login',email:profile.email,password})).status===200);
  ok((await a.request('/')).status===303);
+ const outbox=async()=> (await readFile(join(dir,'var/accounts/test-outbox.jsonl'),'utf8')).trim().split('\n').map(JSON.parse);
+ const verificationMail=(await outbox()).find(x=>x.purpose==='verify');ok(verificationMail.body.includes(verificationMail.url)&&verificationMail.body.includes('24 hodin')&&verificationMail.body.includes('bez čekání'));
  const verify=await mailToken('verify');
  const lifetimes=spawnSync(php,[...args,'-r',`require ${JSON.stringify(join(dir,'dist/auth/bootstrap.php').replaceAll('\\\\','/'))}; echo auth_query("SELECT expires FROM tokens WHERE purpose='verify' LIMIT 1")->fetchColumn()-time();`],{encoding:'utf8'});
  assert.equal(lifetimes.status,0,lifetimes.stderr);ok(Number(lifetimes.stdout)>86300&&Number(lifetimes.stdout)<=86400);
  await a.request('/account.php?view=verify');
  ok((await a.request('/account.php?view=verify',{action:'verify',token:verify})).status===303);
  await a.request('/account.php?view=verify');ok((await a.request('/account.php?view=verify',{action:'verify',token:verify})).status===200);
- // Approval gate: neither verified email nor an old session implies approval.
+ // Verification immediately enables login; explicit administrator restrictions still apply.
  ok((await b.request('/account.php?view=approvals')).status===403);
  await a.request('/account.php?view=login');
  const pending=await a.request('/account.php?view=login',{action:'login',email:profile.email,password});
- ok(pending.status===200&&pending.html.includes('čeká na schválení'));
- ok((await a.request('/')).status===303);
+ ok(pending.location==='/');
+ ok((await a.request('/')).status===200);
+ const activationMail=(await outbox()).find(x=>x.purpose==='approved');ok(activationMail.to===profile.email&&activationMail.url===base+'/account.php?view=login');
  const admin=new Client();const adminProfile={...profile,email:'jgjanousek@gmail.com',first_name:'Správce'};
  await admin.request('/account.php?view=register');
  ok((await admin.request('/account.php?view=register',{action:'register',...adminProfile,password,password_confirm:password,privacy:'yes'})).status===303);

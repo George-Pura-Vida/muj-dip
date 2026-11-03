@@ -5,6 +5,7 @@ const AUTH_ORIGIN = 'https://muj-dip.jirijanousek.cz';
 const AUTH_APPROVER_EMAIL = 'jgjanousek@gmail.com';
 const AUTH_IDLE = 1800;
 const AUTH_ABSOLUTE = 43200;
+require_once __DIR__.'/mail.php';
 
 function auth_test(): bool {
     return PHP_SAPI === 'cli-server' && getenv('MUJDIP_TEST_MODE') === '1'
@@ -31,7 +32,7 @@ function auth_db(): PDO {
         hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         purpose TEXT NOT NULL, value TEXT NOT NULL DEFAULT "", expires INTEGER NOT NULL
     ); CREATE TABLE IF NOT EXISTS limits (key TEXT PRIMARY KEY, count INTEGER NOT NULL, expires INTEGER NOT NULL);');
-    // Migration is serialized and defaults every existing account to pending.
+    // Preserve explicit administrator restrictions; remove the former manual waiting gate.
     $db->exec('BEGIN IMMEDIATE');
     try {
         $columns = $db->query('PRAGMA table_info(users)')->fetchAll(PDO::FETCH_COLUMN, 1);
@@ -39,6 +40,7 @@ function auth_db(): PDO {
             if (!in_array($name, $columns, true)) $db->exec('ALTER TABLE users ADD COLUMN '.$name.' '.$definition);
         }
         $db->exec('CREATE TABLE IF NOT EXISTS approval_audit (id INTEGER PRIMARY KEY AUTOINCREMENT, actor_id INTEGER NOT NULL, user_id INTEGER NOT NULL, decision TEXT NOT NULL, created_at INTEGER NOT NULL)');
+        $db->exec("UPDATE users SET approval_status='approved' WHERE approval_status='pending' AND approved_by IS NULL");
         $db->exec('COMMIT');
     } catch (Throwable $e) { $db->exec('ROLLBACK'); throw $e; }
     @chmod(auth_dir() . '/accounts.sqlite', 0600);
@@ -122,10 +124,10 @@ function auth_email(string $key = 'email'): string {
 }
 function auth_profile(): array {
     $p = [auth_text('first_name', 150, true), auth_text('last_name', 150, true), auth_text('company', 200),
-        auth_text('ico', 8), strtoupper(auth_text('dic', 20)), auth_text('phone', 40), auth_text('address', 500)];
+        auth_text('ico', 8), strtoupper(auth_text('dic', 20)), auth_text('phone', 40, true), auth_text('address', 500)];
     if ($p[3] !== '' && !preg_match('/^\d{8}$/', $p[3])) throw new DomainException('IČ musí mít 8 číslic.');
     if ($p[4] !== '' && !preg_match('/^[A-Z]{2}[A-Z0-9]{2,18}$/', $p[4])) throw new DomainException('DIČ zadejte s předponou země, například CZ.');
-    if ($p[5] !== '' && !preg_match('/^\+?[0-9 ()\-]{6,40}$/', $p[5])) throw new DomainException('Zadejte platné telefonní číslo.');
+    if (!preg_match('/^\+?[0-9 ()\-]{6,40}$/', $p[5]) || !preg_match('/^[0-9]{6,15}$/', preg_replace('/\D/', '', $p[5]))) throw new DomainException('Zadejte platné telefonní číslo.');
     return $p;
 }
 function auth_password(): string {
@@ -157,41 +159,13 @@ function auth_consume(string $purpose, callable $fn): void {
     } catch (Throwable $e) { $db->exec('ROLLBACK'); throw $e; }
 }
 function auth_mail(string $to, string $purpose, string $token): bool {
-    $views = ['verify'=>'verify','reset'=>'reset','email'=>'confirm-email'];
-    $titles = ['verify'=>'Potvrzení registrace MŮJ-DIP','reset'=>'Obnova hesla MŮJ-DIP','email'=>'Potvrzení nového e-mailu MŮJ-DIP'];
-    $base = auth_test() ? 'http://' . $_SERVER['HTTP_HOST'] : AUTH_ORIGIN;
-    // Fragment token is not sent to HTTP access logs or in the referrer.
-    $url = $base . '/account.php?view=' . $views[$purpose] . '#token=' . $token;
-    $validity = $purpose === 'verify' ? '24 hodin' : '30 minut';
-    $body = "Dobrý den,\n\n" . $titles[$purpose] . ":\n" . $url . "\n\nOdkaz platí " . $validity . " a lze jej použít pouze jednou.\nPokud jste o tuto akci nepožádali, zprávu ignorujte.\n\nJiří Janoušek\nMŮJ-DIP\ninfo@jirijanousek.cz\n";
-    if (auth_test()) return file_put_contents(auth_dir().'/test-outbox.jsonl', json_encode(['to'=>$to,'purpose'=>$purpose,'url'=>$url])."\n", FILE_APPEND|LOCK_EX) !== false;
-    $subject = '=?UTF-8?B?' . base64_encode($titles[$purpose]) . '?=';
-    return mail($to,$subject,$body,"From: MUJ-DIP <info@jirijanousek.cz>\r\nReply-To: info@jirijanousek.cz\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8");
+    return auth_send_process_mail($to, $purpose, ['token'=>$token]);
 }
-function auth_notify_registration(string $email, string $firstName, string $lastName, string $company): void {
-    $base = auth_test() ? 'http://' . $_SERVER['HTTP_HOST'] : AUTH_ORIGIN;
-    $url = $base . '/account.php?view=approvals';
-    $title = 'Nová registrace MŮJ-DIP – čeká na schválení';
-    // User-supplied values belong only in the plain-text body, never in headers.
-    $body = "Dobrý den,\n\nv aplikaci MŮJ-DIP se zaregistroval nový uživatel.\n\n"
-        . "Jméno: " . $firstName . " " . $lastName . "\nE-mail: " . $email
-        . ($company !== '' ? "\nFirma: " . $company : '')
-        . "\n\nUživatel musí nejprve ověřit svůj e-mail. Přístup získá až po ověření e-mailu a vašem schválení."
-        . "\n\nSpráva uživatelů:\n" . $url
-        . "\n\nPřihlaste se administrátorským účtem a u daného uživatele zvolte Schválit přístup."
-        . "\nTento odkaz sám o sobě účet neaktivuje.\n\nMŮJ-DIP\n";
+function auth_notify_registration(string $email, string $firstName, string $lastName, string $company, string $phone): void {
     try {
-        if (auth_test()) {
-            $sent = file_put_contents(auth_dir().'/test-outbox.jsonl',
-                json_encode(['to'=>AUTH_APPROVER_EMAIL,'purpose'=>'admin-registration','url'=>$url,'subject'=>$title,'body'=>$body])."\n",
-                FILE_APPEND|LOCK_EX) !== false;
-        } else {
-            $sent = mail(AUTH_APPROVER_EMAIL, '=?UTF-8?B?' . base64_encode($title) . '?=', $body,
-                "From: MUJ-DIP <info@jirijanousek.cz>\r\nReply-To: info@jirijanousek.cz\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8");
-        }
+        $sent = auth_send_process_mail(AUTH_APPROVER_EMAIL, 'admin-registration', ['email'=>$email, 'first_name'=>$firstName, 'last_name'=>$lastName, 'company'=>$company, 'phone'=>$phone]);
         if (!$sent) error_log('MUJ-DIP admin registration notification transport failed');
     } catch (Throwable $e) {
-        // Notification trouble must not discard an otherwise valid registration.
         error_log('MUJ-DIP admin registration notification failed');
     }
 }
@@ -205,14 +179,14 @@ function auth_process(?array $u): void {
         $existing=auth_query('SELECT * FROM users WHERE email=?',[$email])->fetch(PDO::FETCH_ASSOC);
         if (!$existing) {
             $now=time();
-            try { auth_query('INSERT INTO users(email,password_hash,first_name,last_name,company,ico,dic,phone,address,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)',array_merge([$email,auth_hash($password)],$p,[$now,$now]));
+            try { auth_query('INSERT INTO users(email,password_hash,first_name,last_name,company,ico,dic,phone,address,created_at,updated_at,approval_status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)',array_merge([$email,auth_hash($password)],$p,[$now,$now,'approved']));
                 $uid=(int)auth_db()->lastInsertId();
                 $token=auth_token($uid,'verify');
                 if (!auth_mail($email,'verify',$token)) { auth_query('DELETE FROM users WHERE id=? AND verified=0',[$uid]); throw new DomainException('Ověřovací e-mail se nyní nepodařilo odeslat. Zkuste registraci později nebo nás kontaktujte.'); }
-                auth_notify_registration($email,$p[0],$p[1],$p[2]);
+                auth_notify_registration($email,$p[0],$p[1],$p[2],$p[5]);
             } catch (PDOException $e) { if ($e->getCode() !== '23000') throw $e; }
         }
-        auth_redirect('login','Pokud je adresa nová, odeslali jsme ověřovací odkaz. Nejprve potvrďte svůj e-mail odkazem ve zprávě. Poté z bezpečnostních důvodů vyčkejte na schválení přístupu provozovatelem aplikace. Pokud účet už máte, přihlaste se nebo obnovte heslo.');
+        auth_redirect('login','Pokud je adresa nová, odeslali jsme ověřovací odkaz. Nejprve potvrďte svůj e-mail odkazem ve zprávě. Po potvrzení e-mailu se přístup aktivuje automaticky, bez čekání na správce. Pokud účet už máte, přihlaste se nebo obnovte heslo.');
     }
     if ($action === 'login') {
         $email=auth_email(); auth_limit('login-email',$email,10,900); auth_limit('login-ip',$ip,40,900);
@@ -233,8 +207,11 @@ function auth_process(?array $u): void {
         auth_redirect('login','Pokud pro tuto adresu existuje účet, odeslali jsme odkaz k obnově hesla nebo potvrzení registrace. Zkontrolujte i spam.');
     }
     if ($action === 'verify') {
-        auth_consume('verify',function($t){auth_query('UPDATE users SET verified=1,updated_at=? WHERE id=?',[time(),$t['user_id']]);});
-        auth_redirect('login','E-mail byl ověřen. Přihlášení je možné až po schválení účtu správcem. Správce se může přihlásit přímo.');
+        $verifiedId = null;
+        auth_consume('verify',function($t)use(&$verifiedId){auth_query('UPDATE users SET verified=1,updated_at=? WHERE id=?',[time(),$t['user_id']]);$verifiedId=(int)$t['user_id'];});
+        $verifiedUser=auth_query('SELECT * FROM users WHERE id=?',[$verifiedId])->fetch(PDO::FETCH_ASSOC);
+        if($verifiedUser && auth_approved($verifiedUser) && !auth_is_admin($verifiedUser)) auth_notify_access($verifiedUser,'approved');
+        auth_redirect('login','E-mail byl ověřen. Pokud Váš účet nemá omezení od správce, přístup je nyní aktivní a můžete se přihlásit.');
     }
     if ($action === 'reset') {
         auth_limit('reset-ip',$ip,20,1800);$hash=auth_hash(auth_password());
@@ -254,6 +231,7 @@ function auth_process(?array $u): void {
             auth_query('INSERT INTO approval_audit(actor_id,user_id,decision,created_at) VALUES(?,?,?,?)',[$u['id'],(int)$target,$decision,time()]);
             $db->exec('COMMIT');
         } catch (Throwable $e) { $db->exec('ROLLBACK'); throw $e; }
+        if (($targetUser['approval_status'] ?? '') !== $decision) auth_notify_access($targetUser, $decision);
         auth_redirect('approvals','Přístup byl aktualizován. Předchozí relace tohoto účtu byly ukončeny.');
     }
     if ($action === 'logout') { auth_logout();auth_redirect('login','Byli jste odhlášeni.'); }
