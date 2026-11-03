@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1672" height="941" viewBox="0 0 1672 941" role="img" aria-labelledby="banner-title banner-desc">
+<title id="banner-title">MŮJ-DIP – Budoucnost, na kterou nejste sami</title>
+<desc id="banner-desc">Dlouhodobé investování prostřednictvím DIP. Informace pro zaměstnavatele a zaměstnance o ročních limitech daňové podpory: 48 000 Kč pro vlastní odpočty a 50 000 Kč pro osvobozené příspěvky zaměstnavatele.</desc>
+<defs>
+  <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#fffdf9"/><stop offset=".65" stop-color="#fbf5ea"/><stop offset="1" stop-color="#f4e4ca"/></linearGradient>
+  <linearGradient id="gold" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#d4a13c"/><stop offset=".44" stop-color="#e6b848"/><stop offset="1" stop-color="#9c6616"/></linearGradient>
+  <linearGradient id="shine" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffeca9"/><stop offset=".55" stop-color="#c18a25"/><stop offset="1" stop-color="#f1cc76"/></linearGradient>
+  <linearGradient id="cta" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#ef3941"/><stop offset="1" stop-color="#b60f18"/></linearGradient>
+  <filter id="shadow" x="-10%" y="-20%" width="120%" height="150%"><feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#7a5c28" flood-opacity=".13"/></filter>
+  <clipPath id="logo"><circle cx="103" cy="91" r="42"/></clipPath>
+  <style>
+    text{font-family:Arial,"DejaVu Sans",sans-serif}
+    .ink{fill:#211d19}.brown{fill:#9b6a20}.white{fill:#fffdf7}
+    .bold{font-weight:800}.semibold{font-weight:700}
+  </style>
+</defs>
+<rect width="1672" height="941" fill="url(#bg)"/>
+<path d="M1350 0H1672V310Q1540 284 1350 330Q1550 227 1672 45V0Z" fill="url(#shine)" opacity=".75"/>
+<path d="M1470 0H1672V218Q1560 256 1430 286Q1590 144 1672 0Z" fill="#fff9e6" opacity=".78"/>
+<path d="M1435 330Q1550 254 1672 196" fill="none" stroke="#f5d48f" stroke-width="14" opacity=".6"/>
+<g clip-path="url(#logo)">
+  <rect x="59" y="47" width="45" height="44" fill="#e5af36"/><rect x="105" y="47" width="44" height="44" fill="#372519"/>
+  <rect x="59" y="92" width="45" height="44" fill="#f3dbac"/><rect x="105" y="92" width="44" height="44" fill="#ae791e"/>
+</g>
+<circle cx="103" cy="91" r="42" fill="none" stroke="#e0bd7c" stroke-width="2"/>
+<path d="M155 52V133" stroke="#2c2119" stroke-width="4"/>
+<text x="176" y="95" font-size="60" letter-spacing="-1.5" class="ink bold">MŮJ-DIP</text>
+<text x="179" y="135" font-size="27" class="ink semibold">Jiří Janoušek</text>
+<text x="1593" y="84" text-anchor="end" font-size="24" class="ink semibold">muj-dip.jirijanousek.cz</text>
+<text x="69" y="242" font-size="75" letter-spacing="-2.4" class="ink bold">Budoucnost, na kterou nejste sami.</text>
+<text x="73" y="312" font-size="40" class="brown bold">Vaše investice. Příspěvek firmy. Daňové výhody.</text>
+<!-- Zaměstnavatel -->
+<rect x="64" y="352" width="746" height="410" rx="25" fill="url(#gold)" filter="url(#shadow)"/>
+<g fill="none" stroke="#fff9eb" stroke-width="5.5" stroke-linecap="round">
+  <circle cx="119" cy="401" r="11"/><circle cx="163" cy="390" r="15"/><circle cx="206" cy="401" r="11"/>
+  <path d="M96 443v-9a23 23 0 0 1 33-20M228 443v-9a23 23 0 0 0-33-20M134 447v-14a29 29 0 0 1 58 0v14"/>
+</g>
+<path d="M252 382V449" stroke="#fff4d6" stroke-width="3" opacity=".85"/>
+<rect x="274" y="384" width="304" height="48" rx="24" fill="#fffaf0"/>
+<text x="426" y="416" text-anchor="middle" font-size="23" class="ink bold">PRO ZAMĚSTNAVATELE</text>
+<text x="106" y="504" font-size="50" class="white bold">Jak se cítí vaši</text>
+<text x="106" y="559" font-size="50" class="white bold">zaměstnanci?</text>
+<text x="107" y="600" font-size="26" class="white">Podpořte jejich budoucnost</text>
+<text x="107" y="632" font-size="26" class="white">příspěvkem na dlouhodobé investování.</text>
+<rect x="92" y="647" width="691" height="86" rx="16" fill="#fffbf2"/>
+<text x="120" y="711" font-size="69" letter-spacing="-1.5" class="ink bold">50 000 Kč</text>
+<path d="M493 663V719" stroke="#b88e3b" stroke-width="2"/>
+<text x="515" y="687" font-size="27" class="ink semibold">ročně na</text>
+<text x="515" y="716" font-size="27" class="ink semibold">zaměstnance</text>
+<text x="106" y="753" font-size="19" class="white semibold">Společný limit osvobození příspěvků zaměstnavatele od daně.</text>
+<!-- Zaměstnanec -->
+<rect x="835" y="352" width="774" height="410" rx="25" fill="#fffaf1" stroke="#d4a456" stroke-width="3" filter="url(#shadow)"/>
+<g fill="none" stroke="#bd872a" stroke-width="5" stroke-linecap="round">
+  <circle cx="905" cy="413" r="30"/><circle cx="905" cy="413" r="18"/><circle cx="905" cy="413" r="6"/>
+  <path d="M905 413l33-32m0 0v19m0-19h-19"/>
+</g>
+<path d="M963 378V449" stroke="#c49b55" stroke-width="3"/>
+<rect x="993" y="384" width="310" height="48" rx="24" fill="#f7db9d"/>
+<text x="1148" y="416" text-anchor="middle" font-size="23" class="ink bold">PRO ZAMĚSTNANCE</text>
+<text x="874" y="497" font-size="46" letter-spacing="-1.3" class="ink bold">Jak si vybudovat rezervu</text>
+<text x="874" y="550" font-size="50" class="ink bold">na penzi?</text>
+<text x="876" y="587" font-size="24" class="ink">Začněte vlastním plánem. Přispět může</text>
+<text x="876" y="617" font-size="24" class="ink">také váš zaměstnavatel.</text>
+<rect x="864" y="642" width="717" height="103" rx="14" fill="#fffdf9" stroke="#e8d5ae" stroke-width="2"/>
+<text x="881" y="700" font-size="58" letter-spacing="-1" class="ink bold">48 000 Kč</text>
+<text x="882" y="725" font-size="19" class="ink">až ročně odečitatelných</text>
+<text x="882" y="742" font-size="18" class="ink">od základu daně*</text>
+<path d="M1206 656V733" stroke="#caa968" stroke-width="2"/>
+<text x="1221" y="700" font-size="57" letter-spacing="-1.2" class="ink bold">50 000 Kč</text>
+<text x="1222" y="725" font-size="18" class="ink">roční limit osvobození</text>
+<text x="1222" y="742" font-size="18" class="ink">příspěvků od zaměstnavatele*</text>
+<!-- Výzva -->
+<rect x="441" y="779" width="366" height="69" rx="18" fill="url(#cta)" filter="url(#shadow)"/>
+<text x="616" y="827" text-anchor="middle" font-size="33" class="white bold">MÁM ZÁJEM</text>
+<path d="M739 813h35m-12-12 12 12-12 12" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="835" y="824" font-size="29" class="ink semibold">Společně sestavíme váš modelový plán.</text>
+<path d="M74 857H1590" stroke="#dcb86c" stroke-width="1.5"/>
+<text x="78" y="881" font-size="19.5" class="ink">* Uvedené daňové limity platí společně pro příslušné podporované produkty; odpočet 48 000 Kč není přímou daňovou úsporou.</text>
+<text x="78" y="907" font-size="19.5" class="ink">Pro zachování daňové podpory je zpravidla nutné dodržet 120 měsíců a výběr nejdříve v kalendářním roce dosažení 60 let.</text>
+<text x="78" y="932" font-size="19.5" class="ink">Investiční výnos není zaručen. Výpočty jsou orientační a závisí na individuálních podmínkách.</text>
+</svg>
