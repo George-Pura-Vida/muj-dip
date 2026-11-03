@@ -1,4 +1,4 @@
-import {tax,RULES,taxDetail} from './engine.js?v=27';
+import {tax,RULES,taxDetail} from './engine.js?v=35';
 export const COMP_DEFAULTS={age:40,years:20,own:2000,employer:1000,salary:35000,otherOwn:0,otherEmployer:0,otherSales:0,inflation:2.5,pensioner:0,dipRate:8,dpsRate:8,dipEntry:3,dipFee:2.16,dpsEntry:0,dpsFee:1,dpsPerformance:15,netReturns:0,loyalty:0,loyaltyRate:0,dipTax:'test',payout:'lump',strategy:'custom',stress:0,shockYear:20,dipShock:-15,dpsShock:-35};
 export const COMP_EXAMPLE={...COMP_DEFAULTS,dipRate:7.9,dpsRate:7.9,dipFee:1.5,dpsFee:1,dpsPerformance:15,netReturns:0,strategy:'permanent'};
 export function cleanComparison(raw={}){const s={...COMP_DEFAULTS};for(const k in s){if(['dipTax','payout','strategy'].includes(k))continue;const n=Number(raw[k]??s[k]);if(Number.isFinite(n))s[k]=n;}const limits={age:[18,90],years:[1,50],own:[0,100000],employer:[0,100000],salary:[0,1000000],otherOwn:[0,48000],otherEmployer:[0,1000000],otherSales:[0,1000000000],inflation:[0,30],dipRate:[-100,100],dpsRate:[-100,100],dipEntry:[0,100],dpsEntry:[0,100],dipFee:[0,20],dpsFee:[0,20],dpsPerformance:[0,50],netReturns:[0,1],pensioner:[0,1],loyalty:[0,1],loyaltyRate:[0,20],stress:[0,1],shockYear:[1,50],dipShock:[-100,100],dpsShock:[-100,100]};for(const [k,[a,b]] of Object.entries(limits))s[k]=Math.min(b,Math.max(a,s[k]));for(const k of ['age','years','netReturns','pensioner','loyalty','stress','shockYear'])s[k]=Math.round(s[k]);s.shockYear=Math.min(s.years,s.shockYear);s.strategy=['custom','equal','permanent'].includes(raw.strategy)?raw.strategy:'custom';s.dipTax=['test','exempt','taxable'].includes(raw.dipTax)?raw.dipTax:'test';s.payout=raw.payout==='pension'?'pension':'lump';return s;}
@@ -23,4 +23,5 @@ export function stressCases(raw){
  const s=cleanComparison(raw),cases=[['Bez krizového roku',0,0],['Propad na začátku',1,Math.min(2,s.years)],['Propad uprostřed',1,Math.max(1,Math.round(s.years/2))],['Propad před výběrem',1,s.years]];
  return cases.map(([label,stress,shockYear])=>{const r=compare({...s,stress,shockYear:shockYear||s.shockYear});return {label,year:shockYear,dip:r.dip.end.total,dps:r.dps.end.total,difference:r.difference};});
 }
+
 

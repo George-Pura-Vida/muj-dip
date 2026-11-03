@@ -42,9 +42,9 @@ const accountTips={
  company:['Firma','Nepovinné: obchodní název firmy. Pokud se registrujete jako soukromá osoba, ponechte prázdné.'],
  ico:['IČ','Nepovinné: osm číslic identifikačního čísla osoby, včetně úvodních nul. Nevyplňujte rodné číslo.'],
  dic:['DIČ','Nepovinné: daňové identifikační číslo včetně označení země, například CZ. Pokud je nemáte, ponechte prázdné.'],
- phone:['Telefon','Zadejte telefon včetně předvolby, například +420 777 123 456. Není to souhlas s marketingem.'],
+ phone:['Telefon','Nepovinné: telefon včetně předvolby, například +420 777 123 456. Pro přístup do kalkulačky jej nepotřebujete. Není to souhlas s marketingem.'],
  email:['E-mail a login','Použijte dostupnou e-mailovou adresu. Slouží jako přihlašovací jméno a pro potvrzení registrace i obnovu hesla. Změna adresy v profilu vyžaduje současné heslo a potvrzení nové adresy.'],
- address:['Adresa','Vyplňte ulici, číslo, PSČ a obec. Údaje se ukládají do profilu, investiční plány se tím automaticky nesynchronizují mezi zařízeními.'],
+ address:['Adresa','Nepovinné: ulice, číslo, PSČ a obec. Pro přístup do kalkulačky adresu nepotřebujete. Údaje se ukládají do profilu, investiční plány se tím automaticky nesynchronizují mezi zařízeními.'],
  password:['Heslo','Použijte alespoň 7 znaků, nejvýše 72 bajtů. Delší jedinečné heslo usnadní ochranu účtu. Ikona oka přepíná skrytí a zobrazení. Heslo nikomu neposílejte.'],
  password_confirm:['Heslo znovu','Zadejte stejné heslo pro kontrolu překlepu. Ikonou oka můžete text zobrazit. Formulář průvodce nikdy sám neodesílá.'],
  current_password:['Současné heslo','Vyplňujte pouze při změně e-mailu v nastavení účtu.'],
@@ -98,3 +98,4 @@ function setup(root,account=false){
 for(const id of ['plan','company','comparison']){const root=document.getElementById(id);if(root)setup(root);}
 const stressRoot=document.querySelector('.stress-controls');if(stressRoot)setup(stressRoot);
 const account=document.querySelector('.account-card');if(account&&document.querySelector('form'))setup(account,true);
+

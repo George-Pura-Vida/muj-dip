@@ -122,10 +122,10 @@ function auth_email(string $key = 'email'): string {
 }
 function auth_profile(): array {
     $p = [auth_text('first_name', 150, true), auth_text('last_name', 150, true), auth_text('company', 200),
-        auth_text('ico', 8), strtoupper(auth_text('dic', 20)), auth_text('phone', 40, true), auth_text('address', 500, true)];
+        auth_text('ico', 8), strtoupper(auth_text('dic', 20)), auth_text('phone', 40), auth_text('address', 500)];
     if ($p[3] !== '' && !preg_match('/^\d{8}$/', $p[3])) throw new DomainException('IČ musí mít 8 číslic.');
     if ($p[4] !== '' && !preg_match('/^[A-Z]{2}[A-Z0-9]{2,18}$/', $p[4])) throw new DomainException('DIČ zadejte s předponou země, například CZ.');
-    if (!preg_match('/^\+?[0-9 ()\-]{6,40}$/', $p[5])) throw new DomainException('Zadejte platné telefonní číslo.');
+    if ($p[5] !== '' && !preg_match('/^\+?[0-9 ()\-]{6,40}$/', $p[5])) throw new DomainException('Zadejte platné telefonní číslo.');
     return $p;
 }
 function auth_password(): string {
@@ -289,4 +289,5 @@ function auth_require(): array {
     catch(Throwable $e){http_response_code(503);exit('Přihlášení je dočasně nedostupné. Kontakt: info@jirijanousek.cz');}
 }
 function h(string $v): string { return htmlspecialchars($v,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8'); }
+
 

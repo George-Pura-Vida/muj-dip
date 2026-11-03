@@ -22,7 +22,7 @@ class Client{
  }
 }
 const a=new Client(),b=new Client();
-const profile={first_name:'Test',last_name:'Uživatel',company:'Test firma',ico:'12345678',dic:'CZ12345678',phone:'+420 777 123 456',address:'Testovací 1, 11000 Praha',email:'integration@example.invalid'};
+const profile={first_name:'Test',last_name:'Uživatel',company:'Test firma',ico:'12345678',dic:'CZ12345678',phone:'',address:'',email:'integration@example.invalid'};
 const password='Test123';let checks=0;
 function ok(value){assert.ok(value);checks++;}
 async function mailToken(purpose){const lines=(await readFile(join(dir,'var/accounts/test-outbox.jsonl'),'utf8')).trim().split('\n').map(JSON.parse);return new URL(lines.filter(x=>x.purpose===purpose).at(-1).url).hash.slice(7);}
@@ -34,6 +34,8 @@ try{
  for(const legalView of ['terms','privacy','cookies','legal']){const legal=await b.request('/legal.php?view='+legalView);ok(legal.status===200&&legal.html.includes('IČO 13798804')&&legal.html.includes('data-cookie-settings'));}
  const legacyPrivacy=await b.request('/account.php?view=privacy');ok(legacyPrivacy.location==='/legal.php?view=privacy');
  const registration=await a.request('/account.php?view=register');
+ for(const field of ['phone','address']){const input=registration.html.match(new RegExp('<input[^>]*name="'+field+'"[^>]*>'))?.[0];assert.ok(input&&!/\brequired\b/.test(input),'Optional profile contact: '+field);}
+
  ok(registration.headers.get('referrer-policy')==='same-origin');
  ok(registration.html.includes('name="referrer" content="same-origin"'));
  ok(registration.html.includes('minlength="7"'));
@@ -128,4 +130,5 @@ try{
  ok((await a.request('/account.php?view=login',{action:'login',email:'limit@example.invalid',password:'BadPassword'})).status===429);
  console.log(`PASS: ${checks} authentication integration checks (isolated SQLite and email outbox).`);
 }catch(error){console.error(logs);throw error;}finally{server.kill();await new Promise(r=>server.once('exit',r));await rm(dir,{recursive:true,force:true});}
+
 

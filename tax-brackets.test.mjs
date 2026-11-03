@@ -19,3 +19,13 @@ test('shared deduction limits, first year deposit and basic credit remain respec
  near(calculate({...DEFAULTS,salary:160000,otherOwn:48000}).personalTaxDetail.saving,0);
  near(taxDetail(100000,48000).saving,0);
 });
+
+
+test('499 CZK monthly: actual deduction 5988 stays separate from rounded tax saving 900',()=>{
+ const r=calculate({...DEFAULTS,own:499});near(r.allowance,5988);near(r.personalTaxDetail.deduction15,5988);near(r.personalTaxDetail.deduction23,0);near(r.personalTaxDetail.roundingEffect,1.8);near(r.personalTax,900);
+ const c=compare({...COMP_DEFAULTS,own:499});near(c.taxDetails.dip.deduction15,5988);near(c.annualTax.dip,900);near(c.taxDetails.dps.deduction,0);
+});
+test('deduction split never includes tax-base rounding or exceeds actual allowance',()=>{
+ for(const base of [100000,420000,420099,1762812,1762850,1800050])for(const deduction of [0,1,12,5988,48000,base+100]){const d=taxDetail(base,deduction);near(d.deduction15+d.deduction23,Math.min(base,deduction));assert.ok(d.roundedBefore%100===0&&d.roundedAfter%100===0);assert.ok(d.deduction15>=0&&d.deduction23>=0);}
+ near(taxDetail(100000,48000).roundingEffect,0);
+});
