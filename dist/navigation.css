@@ -25,3 +25,8 @@ header #topNav .nav-logout .nav:hover{background:#e8d7ad}
 body>header #menuToggle .menu-lines{display:inline-flex;align-items:center;justify-content:center;width:22px;font-size:22px;line-height:1}
 
 html{scroll-padding-top:96px}#kontakt{scroll-margin-top:96px}
+
+/* Keep logout visible even when the menu is taller than the viewport. */
+header #topNav.menu-open{overflow:hidden}
+header #topNav .menu-pages{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;grid-auto-rows:48px;align-content:start;overscroll-behavior:contain;scrollbar-width:thin}
+header #topNav .nav-logout{flex:0 0 auto;background:#fffaf1}
