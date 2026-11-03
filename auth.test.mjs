@@ -87,7 +87,7 @@ try{
  ok((await admin.request('/account.php?view=verify',{action:'verify',token:adminToken})).location==='/support.php?welcome=1');
  await admin.request('/account.php?view=profile');
  await admin.request('/account.php?view=login');ok((await admin.request('/account.php?view=login',{action:'login',email:adminProfile.email,password})).location==='/');
- const adminHome=await admin.request('/');ok(adminHome.html.includes('class="account-shortcut" href="/admin.php">Admin</a>')&&adminHome.html.includes('Odhlásit se'));
+ const adminHome=await admin.request('/');ok(adminHome.html.includes('href="/admin.php"')&&adminHome.html.includes('Správa uživatelů')&&adminHome.html.includes('class="nav menu-account"')&&!adminHome.html.includes('class="account-shortcut"')&&adminHome.html.includes('Odhlásit se'));
  const panel=await admin.request('/admin.php');ok(panel.status===200&&panel.html.includes(profile.email)&&panel.html.includes('class="admin-table"'));
  const legacy=await admin.request('/account.php?view=approvals');ok(legacy.status===303&&legacy.location==='/admin.php');
  const filtered=await admin.request('/admin.php?q=nomatch123');ok(filtered.html.includes('Žádný účet neodpovídá')&&!filtered.html.includes(profile.email));
