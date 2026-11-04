@@ -2,10 +2,10 @@ import {exportModule} from './module-export.js?v=3';
 import {calculatorReport} from './module-report-data.js?v=2';
 import {years} from './format.js?v=35';
 import {exportPdf} from './pdf.js?v=28';
-import './comparison.js?v=40';
+import './comparison.js?v=41';
 import './guide.js?v=36';
 import {excelBytes,importPlan,saveFile,payload} from './files.js?v=28';
-import {calculate,clean,DEFAULTS} from './engine.js?v=35';
+import {calculate,clean,DEFAULTS} from './engine.js?v=36';
 const $=id=>document.getElementById(id),money=new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:0}),fmt=n=>money.format(n)+' Kč',num=n=>money.format(n),pct=n=>new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:8}).format(n*100)+' %';
 let state={...DEFAULTS},result,timer;const storageKey='muj-dip-plan-v1-'+(document.body.dataset.accountKey||'public');
 function toast(text){$('toast').textContent=text;$('toast').classList.add('show');clearTimeout(timer);timer=setTimeout(()=>$('toast').classList.remove('show'),3500);}
@@ -69,7 +69,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&fileMenu?.open&&men
 document.addEventListener('click',e=>{if(!topNav.contains(e.target)&&!menuToggle.contains(e.target))closeMenu();});
 
 const advancedToggle=$('advancedToggle'),advancedSettings=$('advancedSettings');
-advancedToggle.addEventListener('click',()=>{const open=advancedToggle.getAttribute('aria-expanded')!=='true';advancedToggle.setAttribute('aria-expanded',String(open));advancedSettings.hidden=!open;advancedToggle.querySelector('span').textContent=open?'−':'＋';});
+advancedToggle.addEventListener('click',()=>{const open=advancedToggle.getAttribute('aria-expanded')!=='true';advancedToggle.setAttribute('aria-expanded',String(open));advancedSettings.hidden=!open;advancedToggle.querySelector('.settings-indicator').textContent=open?'−':'＋';});
 
 document.querySelector('label.import').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('import').click();}});
 const compactMenu=window.matchMedia('(max-width:1439px)');compactMenu.addEventListener('change',closeMenu);

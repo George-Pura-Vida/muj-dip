@@ -1,5 +1,5 @@
 export const RULES={year:2026,personalLimit:48000,employerLimit:50000,threshold:1762812,socialCap:2350416,taxCredit:30840};
-export const DEFAULTS={own:4000,employer:3000,otherOwn:0,otherEmployer:0,salary:35000,employees:60,age:45,years:20,initial:0,initialNew:0,rate:5,inflation:2.5,mode:'gross'};
+export const DEFAULTS={own:4000,employer:3000,otherOwn:0,otherEmployer:0,salary:35000,employees:60,age:45,years:20,initial:0,initialNew:0,rate:7,inflation:1,mode:'gross'};
 export function clean(input){const s={...DEFAULTS};for(const k of Object.keys(DEFAULTS)){if(k==='mode'){s.mode=input.mode==='budget'?'budget':'gross';continue;}const v=Number(input[k]);if(Number.isFinite(v))s[k]=v;}
 const bounds={own:[0,100000],employer:[0,100000],otherOwn:[0,48000],otherEmployer:[0,1000000],salary:[22400,1000000],employees:[1,100000],age:[18,90],years:[1,50],initial:[0,100000000],initialNew:[0,1],inflation:[0,15]};for(const [k,[a,b]] of Object.entries(bounds))s[k]=Math.min(b,Math.max(a,s[k]));s.rate=Math.max(-100,s.rate);for(const k of ['employees','age','years','initialNew'])s[k]=Math.round(s[k]);return s;}
 export function tax(base){base=Math.floor(Math.max(0,base)/100)*100;return Math.max(0,Math.min(base,RULES.threshold)*.15+Math.max(0,base-RULES.threshold)*.23-RULES.taxCredit);}
