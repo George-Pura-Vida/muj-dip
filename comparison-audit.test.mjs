@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {compare,COMP_DEFAULTS as CURRENT_DEFAULTS,stressCases} from './dist/comparison-engine.js';
 // Explicit historical assumptions keep the independent 8% / 2.5% audit scenario stable.
-const COMP_DEFAULTS={...CURRENT_DEFAULTS,age:40,years:20,salary:35000,dipRate:8,dpsRate:8,inflation:2.5};
+const COMP_DEFAULTS={...CURRENT_DEFAULTS,age:40,years:20,salary:35000,own:2000,employer:1000,dipRate:8,dpsRate:8,inflation:2.5};
 import {readFileSync} from 'node:fs';import {number,percent,years} from './dist/format.js';import {zip,unzip} from './dist/files.js';
 const close=(a,b)=>assert.ok(Math.abs(a-b)<=Math.max(.01,Math.abs(b)*1e-10),`${a} versus ${b}`);
 const annuity=(factor,n)=>Math.abs(factor-1)<1e-12?n:(factor**n-1)/(factor-1);
