@@ -27,6 +27,7 @@ test('each Excel contains a native chart with values from its module',async()=>{
   const settings=files['xl/worksheets/sheet2.xml'];
   assert.ok(settings.includes(kind==='plan'?'Doba investování':'Počet zaměstnanců'));
   assert.ok(!settings.includes(kind==='plan'?'Počet zaměstnanců':'Doba investování'));
+  for(let i=1;i<=6;i++){assert.ok(files['xl/worksheets/sheet'+i+'.xml'].includes('<oddFooter>'));assert.ok(files['xl/worksheets/sheet'+i+'.xml'].includes('Nejde o investiční'));}
   assert.ok(files['xl/worksheets/_rels/sheet5.xml.rels']);assert.ok(files['xl/drawings/_rels/drawing1.xml.rels']);
  }
 });

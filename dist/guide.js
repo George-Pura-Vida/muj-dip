@@ -42,7 +42,7 @@ const accountTips={
  company:['Firma','Nepovinné: obchodní název firmy. Pokud se registrujete jako soukromá osoba, ponechte prázdné.'],
  ico:['IČ','Nepovinné: osm číslic identifikačního čísla osoby, včetně úvodních nul. Nevyplňujte rodné číslo.'],
  dic:['DIČ','Nepovinné: daňové identifikační číslo včetně označení země, například CZ. Pokud je nemáte, ponechte prázdné.'],
- phone:['Telefon','Nepovinné: telefon včetně předvolby, například +420 777 123 456. Pro přístup do kalkulačky jej nepotřebujete. Není to souhlas s marketingem.'],
+ phone:['Telefon','Vyplňte telefon včetně předvolby, například +420 777 123 456. Slouží ke kontaktu a případnému ověření správcem. Nejde o ověření pomocí SMS ani o souhlas s marketingem.'],
  email:['E-mail a login','Použijte dostupnou e-mailovou adresu. Slouží jako přihlašovací jméno a pro potvrzení registrace i obnovu hesla. Změna adresy v profilu vyžaduje současné heslo a potvrzení nové adresy.'],
  address:['Adresa','Nepovinné: ulice, číslo, PSČ a obec. Pro přístup do kalkulačky adresu nepotřebujete. Údaje se ukládají do profilu, investiční plány se tím automaticky nesynchronizují mezi zařízeními.'],
  password:['Heslo','Použijte alespoň 7 znaků, nejvýše 72 bajtů. Delší jedinečné heslo usnadní ochranu účtu. Ikona oka přepíná skrytí a zobrazení. Heslo nikomu neposílejte.'],
@@ -66,18 +66,18 @@ function show(entry,steps=null,index=0){
  const advanced=entry.label.closest('#advancedSettings');if(advanced){advanced.hidden=false;const b=document.getElementById('advancedToggle');b.setAttribute('aria-expanded','true');b.querySelector('span').textContent='−';}
  progress.textContent=tour?'Krok '+(index+1)+' z '+steps.length:'Vysvětlivka '+entry.number;
  title.textContent=entry.tip[0];body.textContent=entry.tip[1];link.hidden=!entry.tip[2];if(entry.tip[2])link.href=entry.tip[2];
- actions.hidden=!tour;prev.disabled=index===0;next.textContent=steps&&index===steps.length-1?'Dokončit ✓':'Další →';
+ actions.hidden=!tour;prev.disabled=index===0;next.textContent=steps&&index===steps.length-1?(steps.moduleRoot?'Zobrazit výsledek →':'Dokončit ✓'):'Další →';
  bubble.hidden=false;entry.label.classList.add('guide-active');entry.button.setAttribute('aria-expanded','true');entry.input.setAttribute('aria-describedby',body.id);
  entry.label.scrollIntoView({block:'center',behavior:'instant'});if(tour)entry.input.focus({preventScroll:true});position();
 }
 close.onclick=()=>finish();prev.onclick=()=>{if(!tour)return;let i=tour.index-1;while(i>=0&&tour.steps[i].input.disabled)i--;if(i>=0)show(tour.steps[i],tour.steps,i);};
-next.onclick=()=>{if(!tour)return;if(!current.input.checkValidity()){current.input.reportValidity();return;}let i=tour.index+1;while(i<tour.steps.length&&tour.steps[i].input.disabled)i++;if(i===tour.steps.length){finish();return;}show(tour.steps[i],tour.steps,i);};
+next.onclick=()=>{if(!tour)return;if(!current.input.checkValidity()){current.input.reportValidity();return;}let i=tour.index+1;while(i<tour.steps.length&&tour.steps[i].input.disabled)i++;if(i===tour.steps.length){const root=tour.steps.moduleRoot;finish(!root);if(root){const result=root.querySelector('.model-summary');if(result){result.setAttribute('tabindex','-1');result.scrollIntoView({block:'start',behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});result.focus({preventScroll:true});}}return;}show(tour.steps[i],tour.steps,i);};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!bubble.hidden){e.preventDefault();finish();}});
 document.addEventListener('click',e=>{if(!bubble.hidden&&!tour&&!bubble.contains(e.target)&&!current.label.contains(e.target))finish(false);});
 document.addEventListener('click',e=>{if(e.target.closest('[data-tab]'))finish(false);});
 window.addEventListener('resize',position);window.addEventListener('scroll',position,{passive:true});
 function setup(root,account=false){
- const fields=[...root.querySelectorAll(account?'input[name],textarea[name]':'input[data-key],select[data-key],input[data-cmp],select[data-cmp]')].filter(x=>x.type!=='range'&&x.type!=='hidden'&&x.type!=='checkbox'&&(!x.closest('.stress-controls')||root.matches('.stress-controls')));
+ const fields=[...root.querySelectorAll(account?'input[name],textarea[name]':'input[data-key],select[data-key],input[data-cmp],select[data-cmp]')].filter(x=>x.type!=='range'&&x.type!=='hidden'&&x.type!=='checkbox');
  let count=0;const local=[];
  for(const input of fields){
   const key=account?input.name:input.dataset.key||input.dataset.cmp,tip=(account?accountTips:tips)[key],label=input.closest('label');if(!tip||!label||label.querySelector('.guide-help'))continue;
@@ -91,11 +91,14 @@ function setup(root,account=false){
  }
  if(!local.length)return;
  const toolbar=document.createElement('div');toolbar.className='guide-toolbar';
- const start=document.createElement('button');start.type='button';start.className='guide-start';start.textContent=root.matches('.stress-controls')?'🧭 Průvodce scénářem':'🧭 Pomocník s vyplněním';start.onclick=()=>{opener=start;show(local[0],local);};
- const hint=document.createElement('p');hint.textContent='Nevíte si rady? Číslo u pole otevře nápovědu. Pomocník vás provede krok za krokem.';
+ const start=document.createElement('button');start.type='button';start.className='guide-start';start.textContent=account?'🧭 Pomocník s vyplněním':'🧭 Začněte zde – průvodce';
+ const basicKeys={plan:['own','employer','age','years','rate'],company:['employees','salary','employer','mode','otherEmployer'],comparison:['own','employer','age','years','dipRate','dpsRate','netReturns']}[root.id];
+ const steps=basicKeys?basicKeys.map(key=>local.find(e=>(e.input.dataset.key||e.input.dataset.cmp)===key)).filter(Boolean):local;steps.moduleRoot=account?null:root;
+ start.onclick=()=>{opener=start;show(steps[0],steps);};
+ const hint=document.createElement('p');hint.textContent=account?'Číslo u pole otevře nápovědu. Pomocník vás provede krok za krokem.':'1. Zadejte údaje → 2. Prohlédněte si výsledek → 3. Exportujte. Číslo u pole otevře nápovědu; další nastavení jsou dobrovolná.';
  toolbar.append(start,hint);const anchor=account?root.querySelector('form'):root.querySelector('aside.inputs');(anchor||root).prepend(toolbar);
 }
 for(const id of ['plan','company','comparison']){const root=document.getElementById(id);if(root)setup(root);}
-const stressRoot=document.querySelector('.stress-controls');if(stressRoot)setup(stressRoot);
+
 const account=document.querySelector('.account-card');if(account&&document.querySelector('form'))setup(account,true);
 

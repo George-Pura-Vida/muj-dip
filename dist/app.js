@@ -1,9 +1,9 @@
-import {exportModule} from './module-export.js?v=2';
-import {calculatorReport} from './module-report-data.js?v=1';
+import {exportModule} from './module-export.js?v=3';
+import {calculatorReport} from './module-report-data.js?v=2';
 import {years} from './format.js?v=35';
 import {exportPdf} from './pdf.js?v=28';
-import './comparison.js?v=39';
-import './guide.js?v=35';
+import './comparison.js?v=40';
+import './guide.js?v=36';
 import {excelBytes,importPlan,saveFile,payload} from './files.js?v=28';
 import {calculate,clean,DEFAULTS} from './engine.js?v=35';
 const $=id=>document.getElementById(id),money=new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:0}),fmt=n=>money.format(n)+' Kč',num=n=>money.format(n),pct=n=>new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:8}).format(n*100)+' %';
