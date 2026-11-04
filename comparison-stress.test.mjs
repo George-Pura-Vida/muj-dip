@@ -22,7 +22,7 @@ test('sequence risk: same single shock harms late contributions more in this sce
 test('drawdown excludes new contributions, gains tax and unreinvested refunds',()=>{
  const r=compare({...COMP_DEFAULTS,netReturns:1,dipEntry:0,stress:1,shockYear:20,dipShock:-35,dpsShock:-35});
  near(r.dip.maxDrawdown,.35);near(r.dip.end.taxSaving,72000);near(r.dps.end.taxSaving,10800);
- for(const k of ['dip','dps']){const a=r[k].end;near(a.total,a.value-a.tax+a.taxSaving);near(r.points.at(-1)[k],a.total);assert.ok(a.tax>=0);assert.ok(r.baseline[k]>a.total);}
+ for(const k of ['dip','dps']){const a=r[k].end;near(a.total,a.value-a.tax+a.taxSaving);near(r.points.at(-1)[k],a.net);assert.ok(a.tax>=0);assert.ok(r.baseline[k]>a.total);}
 });
 test('net returns include entry costs; gross mode still charges 3 percent entry',()=>{
  const s={...COMP_DEFAULTS,netReturns:1,dipEntry:0};assert.ok(compare(s).difference>0);near(compare({...s,dipEntry:3}).difference,compare(s).difference);
