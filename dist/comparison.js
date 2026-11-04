@@ -1,4 +1,4 @@
-import {exportModule} from './module-export.js?v=1';
+import {exportModule} from './module-export.js?v=2';
 import {number,percent,years} from './format.js?v=35';
 import {compare,cleanComparison,COMP_DEFAULTS,COMP_EXAMPLE,stressCases} from './comparison-engine.js?v=35';
 import {zip,saveFile} from './files.js?v=28';
