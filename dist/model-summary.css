@@ -23,3 +23,10 @@
 @media print{.model-summary.hero{background:#fff;color:#181713;border:1px solid #181713;break-inside:avoid}.model-summary:after{display:none}.model-summary .hero-number,.model-summary .cmp-totals strong{font-size:32px}.model-summary .model-details{display:none}}
 
 .module-exports{display:flex;flex-wrap:wrap;gap:12px;justify-content:flex-end;margin:0 0 18px}.module-exports button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:12px 18px;border:1px solid #b88b3d;border-radius:10px;background:#e8d7ad;color:#342714;font:700 16px/1.4 Arial,Helvetica,sans-serif;cursor:pointer}.module-exports button:first-child{background:#76283b;border-color:#6a2033;color:#fff}.module-exports button:hover{filter:brightness(.94)}.module-exports button:focus-visible{outline:3px solid #2563eb;outline-offset:3px}.module-exports button:disabled{opacity:.6;cursor:wait}@media(max-width:600px){.module-exports{justify-content:stretch}.module-exports button{flex:1 1 140px}}@media print{.module-exports{display:none}}
+
+/* Compact comparison introduction. */
+#comparison .comparison-heading{display:block;margin:12px 0 16px;padding:0;min-height:0}
+#comparison .comparison-heading .eyebrow{display:block;font:600 11px/1.4 Arial,Helvetica,sans-serif;letter-spacing:1.4px;margin:0 0 6px}
+#comparison .comparison-heading h2{font-size:clamp(22px,2.2vw,28px);line-height:1.25;margin:0;gap:10px}
+#comparison .comparison-heading h2 .ui-icon{width:32px;height:32px;flex:0 0 32px;font-size:22px;border-radius:9px}
+#comparison .comparison-heading p{font-size:15px;line-height:1.5;margin:8px 0 0}
