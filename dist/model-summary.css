@@ -43,3 +43,10 @@
 #comparison details.comparison-advanced>summary.settings-toggle .settings-label,#comparison details.comparison-advanced>summary.settings-toggle .settings-label>span{transform:none;float:none;position:static}#comparison details.comparison-advanced>summary.settings-toggle .settings-label{flex:1 1 auto}#plan .settings-toggle .settings-label,#plan .settings-toggle .settings-label>span{transform:none}
 
 #comparison .cmp-shock-actions{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin:16px 0}#comparison .cmp-shock-actions button{width:100%;min-height:48px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;padding:12px 14px;margin:0;border:1px solid #b88b3d;border-radius:10px;background:#ead8ac;color:#342714;font:600 15px/1.5 Arial,Helvetica,sans-serif}#comparison .cmp-shock-actions button[aria-pressed=true]{background:#76283b;border-color:#6a2033;color:#fff}#comparison .cmp-shock-actions button:focus-visible{outline:3px solid #0f766e;outline-offset:3px}#comparison .return-help{font:400 14px/1.65 Arial,Helvetica,sans-serif;padding:12px;border:1px solid #d8c18b;border-radius:10px;background:#faf3df;color:#51452f;margin:12px 0 16px}#comparison .model-breakdown{font:400 14px/1.65 Arial,Helvetica,sans-serif;color:#342714;margin:14px 0 0;overflow-wrap:anywhere}
+
+/* Separate pre-tax account balance from tax-inclusive comparison. */
+.model-summary .cmp-final-summary{position:relative;z-index:1;border-top:1px solid #76592166;padding-top:18px;margin-top:24px}
+.model-summary .cmp-final-summary h3{font:700 18px/1.5 Arial,Helvetica,sans-serif;color:#342714;margin:0}
+.model-summary .cmp-final-summary .cmp-totals{margin:14px 0;gap:20px}
+.model-summary .cmp-final-summary .cmp-totals strong{font-size:clamp(24px,2.8vw,34px)}
+.model-summary .cmp-final-note{font:400 14px/1.6 Arial,Helvetica,sans-serif;color:#342714;margin:4px 0 0}
