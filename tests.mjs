@@ -15,3 +15,20 @@ test('pravidelné vklady odpovídají nezávislému výpočtu bez poplatku',()=>
 
 
 test('new plans use 7 percent return and 1 percent inflation; custom rates survive',async()=>{const {COMP_DEFAULTS,COMP_EXAMPLE,cleanComparison}=await import('./dist/comparison-engine.js');assert.equal(DEFAULTS.age,30);assert.equal(DEFAULTS.years,30);assert.equal(DEFAULTS.salary,50000);assert.equal(DEFAULTS.employees,50);assert.equal(DEFAULTS.rate,7);assert.equal(DEFAULTS.inflation,1);for(const s of [COMP_DEFAULTS,COMP_EXAMPLE]){assert.equal(s.age,30);assert.equal(s.years,30);assert.equal(s.salary,50000);assert.equal(s.own,4000);assert.equal(s.employer,3000);assert.equal(s.dipRate,7);assert.equal(s.dpsRate,7);assert.equal(s.inflation,1);}const s=cleanComparison({dipRate:5,dpsRate:6,inflation:2.5});assert.equal(s.dipRate,5);assert.equal(s.dpsRate,6);assert.equal(s.inflation,2.5);});
+
+test('Můj DIP and DIP × DPS match investment value for identical net inputs and do not charge 1.8% twice',async()=>{
+ const {compare,COMP_DEFAULTS,COMP_EXAMPLE}=await import('./dist/comparison-engine.js');
+ assert.equal(COMP_DEFAULTS.dipFee,1.8);
+ assert.equal(COMP_EXAMPLE.dipFee,1.8);
+ assert.equal(COMP_EXAMPLE.netReturns,1);
+ for(const own of [0,2000,4000])for(const employer of [0,1000,3000])for(const years of [1,10,20,30]){
+  const plan=calculate({own,employer,age:30,years,initial:0,rate:7});
+  const comparison=compare({...COMP_EXAMPLE,own,employer,age:30,years,dipRate:7,dipEntry:3,stress:0});
+  close(comparison.dip.end.value,plan.end.value);
+  close(comparison.dip.end.entry,0);
+  close(comparison.dip.end.management,0);
+ }
+ const gross=compare({...COMP_EXAMPLE,netReturns:0,own:4000,employer:3000});
+ const net=compare({...COMP_EXAMPLE,own:4000,employer:3000});
+ assert.ok(gross.dip.end.value<net.dip.end.value);
+});
