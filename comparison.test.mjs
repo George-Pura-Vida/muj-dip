@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {compare,COMP_DEFAULTS as CURRENT_DEFAULTS,cleanComparison} from './dist/comparison-engine.js';
 // Explicit historical assumptions keep the independent 8% / 2.5% audit scenario stable.
-const COMP_DEFAULTS={...CURRENT_DEFAULTS,age:40,years:20,salary:35000,own:2000,employer:1000,dipRate:8,dpsRate:8,inflation:2.5,netReturns:0,dipFee:2.16};
+const COMP_DEFAULTS={...CURRENT_DEFAULTS,age:40,years:20,salary:35000,own:2000,employer:1000,dipRate:8,dpsRate:8,inflation:2.5,netReturns:0,dipFee:2.16,dipTax:'test'};
 const near=(a,b)=>assert.ok(Math.abs(a-b)<.02,`${a} != ${b}`);
 test('independent annuity and tax: net 8 percent, 20 years',()=>{const r=compare({...COMP_DEFAULTS,netReturns:1,dipEntry:0,dipTax:'exempt'}),m=1.08**(1/12)-1,f=((1+m)**240-1)/m;near(r.dip.end.value,3000*f);near(r.dps.end.value,3340*f);near(r.dip.end.taxSaving,72000);near(r.dps.end.taxSaving,10800);near(r.dps.end.tax,(3340*f-801600)*.15);near(r.difference,32568.8501);});
 test('state support thresholds, pensioner and shared deductions',()=>{for(const [own,support] of [[0,0],[499,0],[500,100],[1000,200],[1699,339.8],[1700,340],[2000,340]])near(compare({...COMP_DEFAULTS,own}).support,support);let r=compare({...COMP_DEFAULTS,pensioner:1});near(r.support,0);near(r.annualTax.dip,r.annualTax.dps);r=compare({...COMP_DEFAULTS,otherOwn:48000});near(r.annualTax.dip,0);near(r.annualTax.dps,0);r=compare({...COMP_DEFAULTS,salary:0});near(r.annualTax.dip,0);});
