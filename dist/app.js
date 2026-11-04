@@ -2,10 +2,10 @@ import {exportModule} from './module-export.js?v=3';
 import {calculatorReport} from './module-report-data.js?v=2';
 import {years} from './format.js?v=35';
 import {exportPdf} from './pdf.js?v=28';
-import './comparison.js?v=44';
+import './comparison.js?v=45';
 import './guide.js?v=36';
 import {excelBytes,importPlan,saveFile,payload} from './files.js?v=28';
-import {calculate,clean,DEFAULTS} from './engine.js?v=38';
+import {calculate,clean,DEFAULTS} from './engine.js?v=39';
 const $=id=>document.getElementById(id),money=new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:0}),fmt=n=>money.format(n)+' Kč',num=n=>money.format(n),pct=n=>new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:8}).format(n*100)+' %';
 let state={...DEFAULTS},result,timer;const storageKey='muj-dip-plan-v1-'+(document.body.dataset.accountKey||'public');
 function toast(text){$('toast').textContent=text;$('toast').classList.add('show');clearTimeout(timer);timer=setTimeout(()=>$('toast').classList.remove('show'),3500);}
