@@ -1,8 +1,8 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {compare,cleanComparison,COMP_DEFAULTS as CURRENT_DEFAULTS,COMP_EXAMPLE as CURRENT_EXAMPLE,stressCases} from './dist/comparison-engine.js';
 // Explicit historical assumptions keep the independent 8% / 2.5% audit scenario stable.
-const COMP_DEFAULTS={...CURRENT_DEFAULTS,dipRate:8,dpsRate:8,inflation:2.5};
-const COMP_EXAMPLE={...CURRENT_EXAMPLE,dipRate:7.9,dpsRate:7.9,inflation:2.5};
+const COMP_DEFAULTS={...CURRENT_DEFAULTS,age:40,years:20,salary:35000,dipRate:8,dpsRate:8,inflation:2.5};
+const COMP_EXAMPLE={...CURRENT_EXAMPLE,age:40,years:20,salary:35000,dipRate:7.9,dpsRate:7.9,inflation:2.5};
 const near=(a,b)=>assert.ok(Math.abs(a-b)<.001,a+' != '+b);
 const ann=(f,n)=>Math.abs(f-1)<1e-10?n:(f**n-1)/(f-1);
 test('stress off preserves audited baseline, even with stored shock magnitudes',()=>{

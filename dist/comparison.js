@@ -1,6 +1,6 @@
 import {exportModule} from './module-export.js?v=3';
 import {number,percent,years} from './format.js?v=35';
-import {compare,cleanComparison,COMP_DEFAULTS,COMP_EXAMPLE,stressCases} from './comparison-engine.js?v=36';
+import {compare,cleanComparison,COMP_DEFAULTS,COMP_EXAMPLE,stressCases} from './comparison-engine.js?v=37';
 import {zip,saveFile} from './files.js?v=28';
 import {jpegPdf} from './pdf.js?v=28';
 const decimalMoney=n=>new Intl.NumberFormat('cs-CZ',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n)+' Kč';
