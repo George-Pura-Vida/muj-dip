@@ -60,7 +60,7 @@ test('Pro firmu: 168 salary, employer, and team scenarios with budget preservati
  assert.equal(n,168);
 });
 
-test('DIP / DPS comparison: 144 horizons, investments, returns, payout modes',()=>{
+test('DIP / DPS comparison: 288 horizons, investments, returns, payout modes',()=>{
  let count=0;
  for(const years of [1,10,20,30])
  for(const own of [0,500,1700,4000])
@@ -128,4 +128,7 @@ test('default DIP gains exemption is only an assumption, model retains taxable s
   assert.ok(taxable.dip.end.tax>=0);
  }
  assert.equal(clean({...DEFAULTS,salary:11000}).salary,11000);
+ assert.equal(compare({...COMP_EXAMPLE,own:0}).dpsEligible,false);
+ assert.equal(compare({...COMP_EXAMPLE,own:99}).dpsEligible,false);
+ assert.equal(compare({...COMP_EXAMPLE,own:100}).dpsEligible,true);
 });
