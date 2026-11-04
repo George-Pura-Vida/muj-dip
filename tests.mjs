@@ -32,3 +32,20 @@ test('Můj DIP and DIP × DPS match investment value for identical net inputs an
  const net=compare({...COMP_EXAMPLE,own:4000,employer:3000});
  assert.ok(gross.dip.end.value<net.dip.end.value);
 });
+
+test('comparison defaults to zero tax on all DIP investment gains',async()=>{
+ const {compare,COMP_DEFAULTS,COMP_EXAMPLE}=await import('./dist/comparison-engine.js');
+ assert.equal(COMP_DEFAULTS.dipTax,'exempt');
+ assert.equal(COMP_EXAMPLE.dipTax,'exempt');
+ for(const years of [1,10,20,30])for(const rate of [0,7,12]){
+  const r=compare({...COMP_EXAMPLE,years,dipRate:rate});
+  close(r.dip.end.tax,0);
+  close(r.dip.end.net,r.dip.end.value);
+ }
+ const {readFileSync}=await import('node:fs');
+ const ui=readFileSync(new URL('./dist/comparison.js',import.meta.url),'utf8');
+ assert.ok(!ui.includes('id="cmp-dip-net"'));
+ assert.ok(!ui.includes('id="cmp-dps-net"'));
+ assert.ok(!ui.includes('data-cmp="dipTax"'));
+ assert.match(ui,/state=cleanComparison\(\{\.\.\.state,dipTax:'exempt'\}\);result=compare/);
+});
