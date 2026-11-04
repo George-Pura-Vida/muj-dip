@@ -49,3 +49,16 @@ test('comparison defaults to zero tax on all DIP investment gains',async()=>{
  assert.ok(!ui.includes('data-cmp="dipTax"'));
  assert.match(ui,/state=cleanComparison\(\{\.\.\.state,dipTax:'exempt'\}\);result=compare/);
 });
+
+test('Můj DIP summary does not show confusing present-value row',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const html=readFileSync(new URL('./dist/index.html',import.meta.url),'utf8');
+ const app=readFileSync(new URL('./dist/app.js',import.meta.url),'utf8');
+ const hero=html.slice(html.indexOf('<section class="hero card model-summary">'),html.indexOf('</section>',html.indexOf('<section class="hero card model-summary">')));
+ assert.ok(hero.includes('id="portfolio"'));
+ assert.ok(hero.includes('id="totalDeposits"'));
+ assert.ok(hero.includes('id="gain"'));
+ assert.ok(!hero.includes('id="realValue"'));
+ assert.ok(!hero.includes('<span>V dnešních cenách</span>'));
+ assert.ok(!app.includes("setText('realValue'"));
+});
