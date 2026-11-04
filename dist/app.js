@@ -1,6 +1,8 @@
+import {exportModule} from './module-export.js?v=1';
+import {calculatorReport} from './module-report-data.js?v=1';
 import {years} from './format.js?v=35';
 import {exportPdf} from './pdf.js?v=28';
-import './comparison.js?v=35';
+import './comparison.js?v=36';
 import './guide.js?v=35';
 import {excelBytes,importPlan,saveFile,payload} from './files.js?v=28';
 import {calculate,clean,DEFAULTS} from './engine.js?v=35';
@@ -39,12 +41,12 @@ for(const el of document.querySelectorAll('[data-key]')){const handler=()=>{if(e
 for(const b of document.querySelectorAll('[data-own]'))b.addEventListener('click',()=>{state.own=Number(b.dataset.own);sync();render();});
 function download(name,text,type){const url=URL.createObjectURL(new Blob([text],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 $('save').addEventListener('click',()=>{try{localStorage.setItem(storageKey,JSON.stringify(state));toast('Plán je uložen v tomto prohlížeči.');}catch{toast('Uložení není dostupné. Použijte Export.');}});
-$('export').addEventListener('click',async()=>{const format=$('exportFormat').value;try{toast('Připravuji export…');if(format==='xlsx')saveFile('MUJ-DIP-plan.xlsx',excelBytes(result),'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');else if(format==='json')saveFile('MUJ-DIP-plan.json',JSON.stringify(payload(state),null,2),'application/json');else{await exportPdf(result,format);}toast('Export je připraven ke stažení.');}catch(error){toast(error.message||'Export se nepodařilo vytvořit.');}});
+$('export').addEventListener('click',async()=>{const format=$('exportFormat').value;try{toast('Připravuji export…');if(format==='xlsx'||format==='pdf')await exportModule(calculatorReport(result,!$('company').hidden?'company':'plan'),format);else if(format==='json')saveFile('MUJ-DIP-plan.json',JSON.stringify(payload(state),null,2),'application/json');else{await exportPdf(result,format);}toast('Export je připraven ke stažení.');}catch(error){toast(error.message||'Export se nepodařilo vytvořit.');}});
 $('import').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{state=await importPlan(file);sync();render();toast('Plán byl načten ze souboru.');}catch(error){toast(error.message||'Soubor nelze načíst.');}finally{e.target.value='';}});
 $('reset').addEventListener('click',()=>{state={...DEFAULTS};sync();render();toast('Obnoven výchozí příklad. Uložený plán zůstává zachován.');});
 $('clear').addEventListener('click',()=>{try{localStorage.removeItem(storageKey);toast('Uložený plán byl vymazán z prohlížeče.');}catch{toast('Úložiště prohlížeče není dostupné.');}});
 $('csv').addEventListener('click',()=>{const rows=[['Rok','Vek','Vlastni vklady Kc','Prispevky firmy Kc','Hodnota DIP Kc','Zhodnoceni Kc','Danova uspora mimo DIP Kc','Hodnota v dnesnich cenach Kc'],...result.points.map(p=>[p.year,state.age+p.year,p.own,p.employer,p.value,p.gain,p.tax,p.real].map(n=>Math.round(n)))];download('muj-dip-vyvoj.csv','\uFEFF'+rows.map(r=>r.join(';')).join('\r\n'),'text/csv;charset=utf-8');});
-$('print').addEventListener('click',async()=>{try{toast('Připravuji PDF přehled…');await exportPdf(result);toast('PDF je připravené. Pokud se nestáhlo, použijte odkaz na stránce.');}catch{toast('Přímý export selhal. Otevírám tisk — vyberte Uložit jako PDF.');window.print();}});
+$('print').addEventListener('click',async()=>{try{toast('Připravuji PDF přehled…');await exportModule(calculatorReport(result,!$('company').hidden?'company':'plan'),'pdf');toast('PDF je připravené. Pokud se nestáhlo, použijte odkaz na stránce.');}catch{toast('Přímý export selhal. Otevírám tisk — vyberte Uložit jako PDF.');window.print();}});
 document.addEventListener('mujdip:file-ready',event=>{
  const box=$('pdfStatus'),file=event.detail;
  if(!box)return;
@@ -80,3 +82,5 @@ const entryParams=new URLSearchParams(location.search);
 const entryTab=entryParams.get('tab');
 if(['plan','company','comparison','method'].includes(entryTab)){tab(entryTab);if(document.readyState==='complete')scrollToCalculator();else window.addEventListener('load',scrollToCalculator,{once:true});}
 if(entryParams.get('download')==='pdf')$('print').click();
+
+for(const button of document.querySelectorAll('[data-module-export]'))button.addEventListener('click',async()=>{button.disabled=true;try{toast('Připravuji export…');await exportModule(calculatorReport(result,button.dataset.module),button.dataset.moduleExport);toast('Export je připravený ke stažení.');}catch(error){toast('Export se nezdařil: '+error.message);}finally{button.disabled=false;}});
