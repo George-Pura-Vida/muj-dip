@@ -10,9 +10,11 @@ serverový cron a e-mailový transport.
 2. Server vytvoří jedinečný osmimístný variabilní symbol a uloží e-mail, jméno a částku do soukromé SQLite.
 3. QR kód v českém SPD formátu obsahuje X-VS pro spárování. Účet zůstává 223366333/2010.
 4. Cron kontroluje API Fio za posledních 14 dní read-only tokenem.
-5. Kontrola: IBAN správného účtu, unikátní VS, přesná kladná částka, CZK, datum a jedinečné ID Fio pohybu.
-6. Po spárování je děkovný e-mail dárci a e-mailové upozornění správci odesláno přes existující PHP mail().
-7. Původní anonymní QR funguje i nadále. U anonymní platby bez VS/e-mailu nelze dárce zpětně poznat.
+5. Ověření účtu: IBAN odpovídá cílovému účtu. Fio JSON datum pohybu je UNIX časová značka v milisekundách (podporujeme i textový datumový formát).
+6. Všechny příchozí kladné transakce s jedinečným Fio ID (s VS i bez VS, v různých měnách) se ukládají do privátní SQLite fronty. Každá vyvolá právě jeden pokus úspěšně převzatého oznámení správci `jgjanousek@gmail.com`; datum, částka, odesílatel (je-li uveden) a zpráva jsou součástí e-mailu.
+7. Poděkování dárci odchází nezávisle pouze tehdy, když se platba CZK spáruje s předem vytvořeným QR e-mailem podle VS, přesné částky, data a Fio ID.
+8. Oznámení správci **nepotřebuje** e-mail dárce; u anonymní platby nelze automaticky odpovědět dárci.
+9. Vše se ukládá pod unikátním bankovním ID, aby další spuštění Cronu neposílala tatáž upozornění znovu. Zpětně se při prvním nasazení prověří pohyby za posledních 14 dní.
 
 ## Produkční nastavení
 
@@ -31,6 +33,16 @@ serverový cron a e-mailový transport.
 - Adresa info@jirijanousek.cz vyžaduje funkční poštovní server a nastavené SPF/DKIM/DMARC.
 - WebKitty nebo jiný hosting musí podporovat PHP a cron. Statický GitHub Pages neprovozuje backend.
 - Cron má lock a minimální odstup Fio volání 60 sekund. Při sdílení tokenu s jinými službami koordinujte frekvenci.
+
+## Jednorázové zpracování a nasazení
+
+- Nový mechanismus se aktivuje automaticky po `git pull` na WebKitty a běží stávajícím Cron příkazem `php84 dist/cron/fio-sync.php` každých 5 minut. **Token ani příkazy Cronu není nutné měnit.**
+- První úspěšná synchronizace po aktualizaci importuje příchozí platby z posledních 14 dní. Pokud byly na bankovním účtu právě dvě testovací platby, správci odejdou dvě samostatná upozornění. Pokud tam byly další příchozí transakce, odejdou upozornění i na ně (nejde nutně o dary).
+- Bankovní účet musí být ten, pro který je token určen; odchozí pohyby se ignorují. Jednotlivé měny se vypisují zvlášť.
+- Jediným zdrojem oznámení pro správce je nová tabulka `fio_inbound_notifications`; starší notifikace v `donations.admin_status` se respektují a nepřeposílají znovu.
+- Tlačítko `Test Command` lze použít na bezpečnou diagnostiku `/usr/bin/php84 /home/sites/1a/1/1f8017897e/muj-dip/dist/cron/donation-status.php`; vrací počty `admin_notice=pending|sending|failed|sent`, bez jmen, VS, e-mailů a tokenů.
+- `sent` = PHP `mail()` úspěšně předalo zprávu poštovnímu systému, nikoli garance doručení do Gmailu. Při pádu ve stavu `sending` se pokus **sám neopakuje**, protože není jisté, zda zpráva už odešla; stav je třeba vyšetřit ručně.
+- Testy v CI zkouší záznam bez VS, příchozí CZK i EUR, vyloučení odchozích plateb, deduplikaci, formát JSON času a ochranu proti nesprávnému IBANu. Skutečné doručení na WebKitty je nutné ověřit při živém běhu.
 
 ## Test
 
@@ -56,9 +68,6 @@ PHP kontrola syntaxe nových souborů pomocí php -l.
 
 ## Stav
 
-Kód ve větvi feature/fio-donations-email je připravený k revizi. Zatím není
-propojen se skutečným Fio tokenem, není naplánován cron na hostingu a
-neproběhl živý test s bankou. Neprovádí změny v Moje renta,
-Můj kmen ani Moje krypto.
+Dřívější živý test potvrdil spojení s Fio API. Nový modul jednorázových notifikací vyžaduje aktualizaci kódu na WebKitty a ověření doručení e-mailu; neovlivňuje Moje renta, Můj kmen ani Moje krypto.
 
 Dokumentace Fio: https://www.fio.cz/docs/cz/API_Bankovnictvi.pdf
