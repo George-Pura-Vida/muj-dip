@@ -20,7 +20,7 @@ jobs:
       - run: npm test
       - run: node --check dist/support.js && node --check dist/support-payment.js
       - run: node --check dist/app.js && node --check dist/comparison.js
-      - run: php -l dist/auth/mail.php && php -l dist/auth/bootstrap.php && php -l dist/support.php && php -l dist/admin.php && php -l dist/account.php && php -l dist/site-header.php && php -l dist/index.php && php -l dist/legal.php && php -l dist/auth/donations.php && php -l dist/donation-intent.php && php -l dist/cron/fio-sync.php
+      - run: php -l dist/auth/mail.php && php -l dist/auth/bootstrap.php && php -l dist/support.php && php -l dist/admin.php && php -l dist/account.php && php -l dist/site-header.php && php -l dist/index.php && php -l dist/legal.php && php -l dist/auth/donations.php && php -l dist/auth/inbound-notifications.php && php -l dist/auth/donation-config.php && php -l dist/donation-intent.php && php -l dist/cron/fio-sync.php && php -l dist/cron/donation-status.php
       - run: php mail-templates.test.php
       - run: php donations.test.php
       - run: node auth.test.mjs
