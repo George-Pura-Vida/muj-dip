@@ -8,7 +8,7 @@ if (PHP_SAPI !== 'cli') {
     http_response_code(404);
     exit;
 }
-require __DIR__.'/../auth/donations.php';
+require __DIR__.'/../auth/inbound-notifications.php';
 ini_set('display_errors','0');
 $token=donation_bank_token();
 if (!donation_feature_enabled() || !preg_match('/\A[A-Za-z0-9]{30,128}\z/D',$token)) {
@@ -52,11 +52,13 @@ try {
     $payload=json_decode($response,true,512,JSON_THROW_ON_ERROR);
     if (!is_array($payload)) throw new RuntimeException('Fio: neplatná JSON odpověď');
     $matched=donation_match_transactions($payload);
+    $inbound=inbound_collect($payload);
     $db->prepare("INSERT INTO donation_poll(identifier,last_success) VALUES('fio',?)
         ON CONFLICT(identifier) DO UPDATE SET last_success=excluded.last_success")->execute([time()]);
     $mail=donation_dispatch();
-    printf("Fio sync OK; matched=%d; donor=%d; admin=%d; failed=%d\n",
-        $matched,$mail['donor'],$mail['admin'],$mail['failed']);
+    $alerts=inbound_dispatch();
+    printf("Fio sync OK; matched=%d; inbound_new=%d; donor=%d; admin=%d; failed=%d\n",
+        $matched,$inbound,$mail['donor'],$alerts['admin'],$mail['failed']+$alerts['failed']);
 } catch (Throwable $e) {
     error_log('MUJ-DIP donation sync: '.$e->getMessage());
     fwrite(STDERR,"Fio sync failed; see server error log.\n");
