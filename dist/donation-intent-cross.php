@@ -16,6 +16,7 @@ header('Referrer-Policy: no-referrer');
 $origins=[
     'https://moje-renta.jirijanousek.cz'=>'moje-renta',
     'https://moje-krypto.jirijanousek.cz'=>'moje-krypto',
+    'https://muj-kmen.jirijanousek.cz'=>'muj-kmen',
 ];
 $origin=(string)($_SERVER['HTTP_ORIGIN']??'');
 $app=$origins[$origin]??null;
