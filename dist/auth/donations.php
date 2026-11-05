@@ -11,6 +11,7 @@ require_once __DIR__ . '/donation-config.php';
 
 const DONATION_IBAN = 'CZ8220100000000223366333';
 const DONATION_APP = 'Můj DIP';
+const DONATION_APPS = ['muj-dip'=>'Můj DIP','moje-renta'=>'Moje renta','moje-krypto'=>'Moje krypto','muj-kmen'=>'Můj kmen'];
 
 function donation_db(): PDO {
     static $db;
@@ -26,6 +27,7 @@ function donation_db(): PDO {
         vs TEXT NOT NULL UNIQUE,
         email TEXT NOT NULL,
         donor_name TEXT NOT NULL DEFAULT '',
+        app TEXT NOT NULL DEFAULT 'muj-dip',
         amount_cents INTEGER NOT NULL CHECK (amount_cents >= 100 AND amount_cents <= 999999999),
         created_at INTEGER NOT NULL,
         status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','paid')),
@@ -43,6 +45,10 @@ function donation_db(): PDO {
         identifier TEXT PRIMARY KEY,
         last_success INTEGER NOT NULL
     )");
+    // Existing donations.sqlite from Můj DIP predates app tagging; preserve prior rows.
+    $columns=$db->query("PRAGMA table_info(donations)")->fetchAll(PDO::FETCH_ASSOC);
+    if (!in_array('app',array_column($columns,'name'),true))
+        $db->exec("ALTER TABLE donations ADD COLUMN app TEXT NOT NULL DEFAULT 'muj-dip'");
     @chmod($file, 0600);
     return $db;
 }
@@ -76,7 +82,8 @@ function donation_rate_limit(string $ip): void {
     }
 }
 
-function donation_create_intent(string $email, string $name, int $amountCents): array {
+function donation_create_intent(string $email, string $name, int $amountCents, string $app='muj-dip'): array {
+    if (!array_key_exists($app,DONATION_APPS)) throw new InvalidArgumentException('Neplatná aplikace podpory.');
     $email=trim($email);
     if (strlen($email)>254 || !filter_var($email,FILTER_VALIDATE_EMAIL)) {
         throw new InvalidArgumentException('Zadejte platnou e-mailovou adresu.');
@@ -90,8 +97,8 @@ function donation_create_intent(string $email, string $name, int $amountCents): 
     for ($i=0; $i<15; $i++) {
         $vs=(string)random_int(10000000,99999999);
         try {
-            $q=$db->prepare('INSERT INTO donations(vs,email,donor_name,amount_cents,created_at) VALUES (?,?,?,?,?)');
-            $q->execute([$vs,$email,$name,$amountCents,time()]);
+            $q=$db->prepare('INSERT INTO donations(vs,email,donor_name,amount_cents,created_at,app) VALUES (?,?,?,?,?,?)');
+            $q->execute([$vs,$email,$name,$amountCents,time(),$app]);
             return ['vs'=>$vs,'amount_cents'=>$amountCents];
         } catch (PDOException $e) {
             if (str_contains($e->getMessage(), 'UNIQUE constraint failed: donations.vs')) continue;
@@ -178,9 +185,10 @@ function donation_text_amount(int $cents): string {
     return number_format($cents/100, $cents%100===0?0:2, ',', ' ') . ' Kč';
 }
 
-function donation_send(string $to, string $subject, string $body): bool {
+function donation_send(string $to, string $subject, string $body, string $senderApp=DONATION_APP): bool {
+    if (!in_array($senderApp,DONATION_APPS,true)) $senderApp=DONATION_APP;
     if (!filter_var($to, FILTER_VALIDATE_EMAIL) || strpbrk($to, "\r\n") !== false) return false;
-    $headers='From: '.auth_email_header('MŮJ DIP').' <info@jirijanousek.cz>'."\r\n"
+    $headers='From: '.auth_email_header($senderApp).' <info@jirijanousek.cz>'."\r\n"
         ."Reply-To: info@jirijanousek.cz\r\nMIME-Version: 1.0\r\n"
         ."Content-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: 8bit";
     return mail($to, auth_email_header($subject), str_replace("\n","\r\n",$body), $headers);
@@ -204,11 +212,12 @@ function donation_dispatch(): array {
             $q->execute([(int)$donation['id']]);
             if ($q->rowCount()!==1) continue;
             $amount=donation_text_amount((int)$donation['amount_cents']);
+            $app=DONATION_APPS[$donation['app']??'muj-dip']??DONATION_APP;
             $who=($donation['donor_name']!=='' ? $donation['donor_name'] : 'dárce');
             if ($kind==='donor') {
                 $to=$donation['email'];
-                $subject='💛 Děkuji za podporu projektu Můj DIP';
-                $body="Dobrý den,\n\n💛 Moc Vám děkuji za dobrovolnou podporu projektu Můj DIP!\n\n"
+                $subject='💛 Děkuji za podporu projektu '.$app;
+                $body="Dobrý den,\n\n💛 Moc Vám děkuji za dobrovolnou podporu projektu $app!\n\n"
                     ."Na náš účet byla připsána Vaše platba ve výši $amount.\n\n"
                     ."Pomáháte tak rozvíjet aplikaci a udržovat ji dostupnou.\n"
                     ."Velmi si Vaší podpory vážím. 🌟\n\n"
@@ -223,7 +232,7 @@ function donation_dispatch(): array {
                     ."Jméno: $who\nE-mail dárce: {$donation['email']}\n";
             }
             try {
-                $ok=donation_send($to,$subject,$body);
+                $ok=donation_send($to,$subject,$body,$app);
             } catch (Throwable $e) {
                 $ok=false;
                 error_log('Muj DIP donation mail delivery transport exception');

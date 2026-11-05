@@ -44,6 +44,17 @@ serverový cron a e-mailový transport.
 - `sent` = PHP `mail()` úspěšně předalo zprávu poštovnímu systému, nikoli garance doručení do Gmailu. Při pádu ve stavu `sending` se pokus **sám neopakuje**, protože není jisté, zda zpráva už odešla; stav je třeba vyšetřit ručně.
 - Testy v CI zkouší záznam bez VS, příchozí CZK i EUR, vyloučení odchozích plateb, deduplikaci, formát JSON času a ochranu proti nesprávnému IBANu. Skutečné doručení na WebKitty je nutné ověřit při živém běhu.
 
+## Společná platební logika pro čtyři weby
+
+- **Můj DIP** je jediný platební backend: vlastní donation-intent.php, veřejná brána donation-intent-cross.php a jediný CLI cron/fio-sync.php (každých 5 minut).
+- **Moje renta**, **Moje krypto** a **Můj kmen** volají z veřejné stránky /support.html přes HTTPS a CORS službu Můj DIP. Brána podle povoleného HTTP Origin určí, z jaké aplikace příspěvek pochází.
+- Klient zadá e-mail, volitelně jméno a částku, potvrdí jednorázové poděkování a obdrží QR s unikátním osmimístným VS. Pokud endpoint selže, formulář zobrazí chybu; lze přispět anonymním QR bez e-mailu.
+- Po spárování příchozí platby s částkou, měnou, VS, bankovním ID a datem odejde jednomu dárci jediné poděkování s názvem správné aplikace. Správce obdrží na Fio ID přesně jedno oznámení za pohyb.
+- Soukromá databáze na Můj DIP automaticky doplní existující řádky značkou muj-dip. Uživatelská data ostatních webů se nemění.
+- Bankovní token, SQLite databáze dárců a Fio Cron zůstávají **pouze na Můj DIP**, nikdy se nekopírují do dalších webů, JavaScriptu ani GitHubu.
+- **Pořadí WebKitty deploymentu:** nejdřív Můj DIP main, zkontrolovat funkčnost nové brány, potom main v Moje renta, Moje krypto a Můj kmen.
+- **Živý test:** v každé aplikaci vytvořit QR s e-mailem, zaplatit, ověřit skutečné doručení zprávy dárci i správci a při dalším Cronu žádné duplikáty. GitHub testy nejsou dokladem živého doručení.
+
 ## Test
 
 1. Vytvořit QR s poděkováním pro vlastní e-mail a 1 Kč.
@@ -68,6 +79,6 @@ PHP kontrola syntaxe nových souborů pomocí php -l.
 
 ## Stav
 
-Dřívější živý test potvrdil spojení s Fio API. Nový modul jednorázových notifikací vyžaduje aktualizaci kódu na WebKitty a ověření doručení e-mailu; neovlivňuje Moje renta, Můj kmen ani Moje krypto.
+Dřívější živý test potvrdil spojení s Fio API a doručení oznámení správci. Nové sdílené formuláře ve webových aplikacích Moje renta, Moje krypto a Můj kmen potřebují nasadit nejprve změny Můj DIP a poté aktualizace jednotlivých webů. Doručení poděkování dárci z těchto aplikací musí být ověřeno živou platbou se správným VS.
 
 Dokumentace Fio: https://www.fio.cz/docs/cz/API_Bankovnictvi.pdf
