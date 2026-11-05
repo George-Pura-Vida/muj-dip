@@ -1,23 +1,28 @@
 import {payment,amountInHellers,paymentDescriptor} from './support-payment.js?v=2';
 import {qrcodegen} from './vendor/qrcodegen.js?v=1';
 const input=document.getElementById('supportAmount'),error=document.getElementById('paymentError'),
-  preview=document.getElementById('paymentPreview'),qrHost=document.getElementById('paymentQr'),
+  preview=document.getElementById('paymentPreview'),placeholder=document.getElementById('paymentPlaceholder'),qrHost=document.getElementById('paymentQr'),
   status=document.getElementById('supportStatus'),
   donorEmail=document.getElementById('donorEmail'),donorName=document.getElementById('donorName'),
   consent=document.getElementById('donorConsent'),feedback=document.getElementById('donationFeedback'),
-  prepare=document.getElementById('prepareThanks');
+  prepare=document.getElementById('prepareThanks'),prepareAnonymous=document.getElementById('prepareAnonymous');
 const format=new Intl.NumberFormat('cs-CZ',{style:'currency',currency:'CZK',maximumFractionDigits:2});
-let currentQr=null,currentCents=0,variableSymbol='',intentAmount=0;
+let currentQr=null,currentCents=0,variableSymbol='',intentAmount=0,qrMode='none';
 
 function clearIntent(){
-  variableSymbol='';intentAmount=0;
-  feedback.textContent='';
+  variableSymbol='';intentAmount=0;qrMode='none';
+  feedback.textContent='';status.textContent='';
   render();
 }
 function render(){
   try{
     currentCents=amountInHellers(input.value);
-    if(variableSymbol && intentAmount!==currentCents){variableSymbol='';intentAmount=0;}
+    if(variableSymbol && intentAmount!==currentCents){variableSymbol='';intentAmount=0;qrMode='none';}
+    document.querySelectorAll('[data-amount]').forEach(button=>button.setAttribute('aria-pressed',String(Number(button.dataset.amount)*100===currentCents)));
+    if(qrMode==='none' || (qrMode==='linked' && !variableSymbol)){
+      currentQr=null;qrHost.replaceChildren();preview.hidden=true;placeholder.hidden=false;
+      error.textContent='';input.removeAttribute('aria-invalid');return;
+    }
     currentQr=qrcodegen.QrCode.encodeText(paymentDescriptor(input.value,variableSymbol),qrcodegen.QrCode.Ecc.MEDIUM);
     const ns='http://www.w3.org/2000/svg',border=4,size=currentQr.size+border*2;
     const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 '+size+' '+size);
@@ -33,10 +38,9 @@ function render(){
     document.getElementById('paymentMode').textContent=variableSymbol
       ?'✅ QR kód obsahuje identifikátor platby. Po připsání platby obdržíte jednorázové poděkování na e-mail.'
       :'Anonymní QR platba: bez automatického poděkování e-mailem.';
-    error.textContent='';input.removeAttribute('aria-invalid');preview.hidden=false;
-    document.querySelectorAll('[data-amount]').forEach(button=>button.setAttribute('aria-pressed',String(Number(button.dataset.amount)*100===currentCents)));
+    error.textContent='';input.removeAttribute('aria-invalid');placeholder.hidden=true;preview.hidden=false;
   }catch(e){
-    currentQr=null;preview.hidden=true;qrHost.replaceChildren();input.setAttribute('aria-invalid','true');
+    currentQr=null;preview.hidden=true;placeholder.hidden=false;qrHost.replaceChildren();input.setAttribute('aria-invalid','true');
     error.textContent=e.message;
     document.querySelectorAll('[data-amount]').forEach(button=>button.setAttribute('aria-pressed','false'));
   }
@@ -55,6 +59,7 @@ prepare.addEventListener('click',async()=>{
   try{cents=amountInHellers(input.value);}catch(e){feedback.textContent=e.message;return;}
   if(!donorEmail.validity.valid || !donorEmail.value.trim()){feedback.textContent='Zadejte platný e-mail pro poděkování.';donorEmail.focus();return;}
   if(!consent.checked){feedback.textContent='Potvrďte prosím zaslání jednorázového děkovného e-mailu.';return;}
+  const submittedAmount=input.value,submittedEmail=donorEmail.value.trim(),submittedName=donorName.value.trim();
   prepare.disabled=true;feedback.textContent='Připravuji QR kód s variabilním symbolem…';
   try{
     const response=await fetch('/donation-intent.php',{
@@ -62,21 +67,30 @@ prepare.addEventListener('click',async()=>{
       headers:{'Content-Type':'application/json','Accept':'application/json'},
       body:JSON.stringify({
         csrf:document.querySelector('meta[name="donation-csrf"]')?.content||'',
-        name:donorName.value.trim(),email:donorEmail.value.trim(),
-        amount:input.value,acknowledge:true
+        name:submittedName,email:submittedEmail,
+        amount:submittedAmount,acknowledge:true
       })
     });
     const data=await response.json();
     if(!response.ok)throw new Error(data.error||'Požadavek se nepodařilo zpracovat.');
     if(!/^[1-9][0-9]{7}$/.test(data.vs) || data.amount_cents!==cents)
       throw new Error('Server vrátil neplatné platební údaje.');
-    variableSymbol=data.vs;intentAmount=cents;
+    if(input.value!==submittedAmount || donorEmail.value.trim()!==submittedEmail || donorName.value.trim()!==submittedName || !consent.checked)
+      throw new Error('Údaje se během přípravy změnily. Vytvořte prosím QR kód znovu.');
+    variableSymbol=data.vs;intentAmount=cents;qrMode='linked';
     render();feedback.textContent='✅ QR s poděkováním je připraven. Použijte pouze nový QR kód s variabilním symbolem '+variableSymbol+'.';
     document.getElementById('paymentQr').scrollIntoView({behavior:'smooth',block:'center'});
   }catch(e){
-    variableSymbol='';intentAmount=0;render();
+    variableSymbol='';intentAmount=0;qrMode='none';render();
     feedback.textContent=e.message||'Nepodařilo se připojit k serveru.';
   }finally{prepare.disabled=false;}
+});
+
+prepareAnonymous.addEventListener('click',()=>{
+  variableSymbol='';intentAmount=0;qrMode='anonymous';
+  feedback.textContent='';status.textContent='';
+  render();
+  if(currentQr){document.getElementById('paymentQr').scrollIntoView({behavior:'smooth',block:'center'});}
 });
 
 document.getElementById('copyPayment').addEventListener('click',async()=>{
