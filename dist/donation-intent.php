@@ -11,7 +11,7 @@ function respond(int $code, array $data): never {
     exit;
 }
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') respond(405,['error'=>'Použijte formulář podpory.']);
-if (getenv('DONATIONS_ENABLED') !== '1') {
+if (!donation_feature_enabled()) {
     respond(503,['error'=>'Automatické e-mailové poděkování zatím není aktivováno. Můžete využít anonymní QR platbu.']);
 }
 if (!str_starts_with(strtolower((string)($_SERVER['CONTENT_TYPE'] ?? '')), 'application/json')) {
