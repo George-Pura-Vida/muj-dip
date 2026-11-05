@@ -10,8 +10,8 @@ if (PHP_SAPI !== 'cli') {
 }
 require __DIR__.'/../auth/donations.php';
 ini_set('display_errors','0');
-$token=(string)(getenv('FIO_TOKEN') ?: '');
-if (getenv('DONATIONS_ENABLED') !== '1' || !preg_match('/\A[A-Za-z0-9]{30,128}\z/D',$token)) {
+$token=donation_bank_token();
+if (!donation_feature_enabled() || !preg_match('/\A[A-Za-z0-9]{30,128}\z/D',$token)) {
     fwrite(STDERR,"Donations are disabled or FIO_TOKEN is not configured.\n");
     exit(1);
 }
