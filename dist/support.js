@@ -7,9 +7,10 @@ const input=document.getElementById('supportAmount'),error=document.getElementBy
   consent=document.getElementById('donorConsent'),feedback=document.getElementById('donationFeedback'),
   prepare=document.getElementById('prepareThanks'),prepareAnonymous=document.getElementById('prepareAnonymous');
 const format=new Intl.NumberFormat('cs-CZ',{style:'currency',currency:'CZK',maximumFractionDigits:2});
-let currentQr=null,currentCents=0,variableSymbol='',intentAmount=0,qrMode='none';
+let currentQr=null,currentCents=0,variableSymbol='',intentAmount=0,qrMode='none',requestEpoch=0;
 
 function clearIntent(){
+  requestEpoch++;
   variableSymbol='';intentAmount=0;qrMode='none';
   feedback.textContent='';status.textContent='';
   render();
@@ -60,6 +61,7 @@ prepare.addEventListener('click',async()=>{
   if(!donorEmail.validity.valid || !donorEmail.value.trim()){feedback.textContent='Zadejte platný e-mail pro poděkování.';donorEmail.focus();return;}
   if(!consent.checked){feedback.textContent='Potvrďte prosím zaslání jednorázového děkovného e-mailu.';return;}
   const submittedAmount=input.value,submittedEmail=donorEmail.value.trim(),submittedName=donorName.value.trim();
+  const epoch=++requestEpoch;
   prepare.disabled=true;feedback.textContent='Připravuji QR kód s variabilním symbolem…';
   try{
     const response=await fetch('/donation-intent.php',{
@@ -72,6 +74,7 @@ prepare.addEventListener('click',async()=>{
       })
     });
     const data=await response.json();
+    if(epoch!==requestEpoch)return; // uživatel mezitím zvolil jinou platbu
     if(!response.ok)throw new Error(data.error||'Požadavek se nepodařilo zpracovat.');
     if(!/^[1-9][0-9]{7}$/.test(data.vs) || data.amount_cents!==cents)
       throw new Error('Server vrátil neplatné platební údaje.');
@@ -81,12 +84,14 @@ prepare.addEventListener('click',async()=>{
     render();feedback.textContent='✅ QR s poděkováním je připraven. Použijte pouze nový QR kód s variabilním symbolem '+variableSymbol+'.';
     document.getElementById('paymentQr').scrollIntoView({behavior:'smooth',block:'center'});
   }catch(e){
+    if(epoch!==requestEpoch)return;
     variableSymbol='';intentAmount=0;qrMode='none';render();
     feedback.textContent=e.message||'Nepodařilo se připojit k serveru.';
   }finally{prepare.disabled=false;}
 });
 
 prepareAnonymous.addEventListener('click',()=>{
+  requestEpoch++;
   variableSymbol='';intentAmount=0;qrMode='anonymous';
   feedback.textContent='';status.textContent='';
   render();
