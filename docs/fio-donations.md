@@ -20,8 +20,11 @@ serverový cron a e-mailový transport.
 - Úložiště je mimo web ve var/accounts/donations.sqlite vytvořené přes auth_dir().
 - Ve Fio Internetbankingu vygenerujte token POUZE PRO SLEDOVÁNÍ účtu přijímajícího dary.
 - Token nikdy neukládejte do GitHubu, JavaScriptu, HTML, QR kódu, chatu ani do URL veřejné aplikace.
-- Pro PHP webový proces nastavte tajnou konfiguraci DONATIONS_ENABLED=1.
-- Pro CLI nastavte DONATIONS_ENABLED=1 a FIO_TOKEN s reálným tokenem. Token musí být v chráněném konfiguračním prostředí mimo web (práva 0600), nikoli v parametrech příkazové řádky cronu.
+- Na WebKitty je možné místo serverových env proměnných použít dva SOUKROMÉ soubory v kořenové složce projektu `var/` (tato složka je v `.gitignore`, mimo veřejné `dist/`):
+  1. `var/fio-token.txt` = samotný Fio read-only token bez dalšího textu; oprávnění souboru musí být `0600`. Token se načítá pouze v CLI cron skriptu. Pokud má soubor širší oprávnění, synchronizace odmítne běžet.
+  2. `var/donations-enabled.flag` = jediný znak `1` (lze přidat až po dokončení testu tokenu). Tento soubor zapíná vytvoření QR platebního požadavku i synchronizaci. Není tajný.
+- Alternativně lze použít původní serverové proměnné `DONATIONS_ENABLED=1` pro web i CLI a `FIO_TOKEN` jen pro CLI; hodnotu tokenu nikdy neuvádějte do příkazu Cron, jeho parametrů ani do HTTP odpovědi.
+- Doporučený Cron na tomto WebKitty hostingu je `/usr/bin/php84 /home/sites/1a/1/1f8017897e/muj-dip/dist/cron/fio-sync.php`, každých 5 minut. Nezaměňujte s `php84 -l`, který pouze testuje syntaxi.
 - Cron spouštějte každých 5 minut příkazem:
   /usr/bin/php /ABSOLUTNI/CESTA/dist/cron/fio-sync.php
 - Cron i PHP web musí mít odpovídající přístupová práva k soukromé SQLite.
