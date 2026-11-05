@@ -7,7 +7,8 @@ export function amountInHellers(value) {
   if(amount<100||amount>999999999) throw new Error('Zadejte částku od 1 do 9 999 999,99 Kč.');
   return amount;
 }
-export function paymentDescriptor(value) {
+export function paymentDescriptor(value, variableSymbol = '') {
   const cents=amountInHellers(value);
-  return 'SPD*1.0*ACC:'+payment.iban+'*AM:'+Math.floor(cents/100)+'.'+String(cents%100).padStart(2,'0')+'*CC:CZK*MSG:'+payment.message;
+  if (variableSymbol && !/^[1-9][0-9]{7}$/.test(variableSymbol)) throw new Error('Neplatný variabilní symbol.');
+  return 'SPD*1.0*ACC:'+payment.iban+'*AM:'+Math.floor(cents/100)+'.'+String(cents%100).padStart(2,'0')+'*CC:CZK'+(variableSymbol?'*X-VS:'+variableSymbol:'')+'*MSG:'+payment.message;
 }
