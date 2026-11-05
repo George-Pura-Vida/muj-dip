@@ -25,3 +25,21 @@ test('support is optional, public and reachable from navigation',async()=>{
  assert.ok(page.includes(payment.account)&&page.includes('CZ82 2010 0000 0002 2336 6333'));assert.ok(!page.includes('auth_require()'));
  assert.ok(index.includes('class="nav menu-support" href="/support.php"'));assert.ok(index.replace(/<[^>]*>/g,'').includes('💛 Podpořit Můj DIP'));
 });
+
+test('donor-linked QR contains the validated variable symbol without email address',()=>{
+ const qr=paymentDescriptor('100','12345678');
+ assert.ok(qr.includes('*AM:100.00*CC:CZK*X-VS:12345678*MSG:'));
+ assert.ok(!qr.includes('@'));
+ for(const bad of ['','1','1234567890','00000000','12A45678','12345678*ACC:evil']){
+  if(bad==='')continue; // Empty means legitimate anonymous payment.
+  assert.throws(()=>paymentDescriptor('100',bad));
+ }
+});
+test('opt-in donation interface requires explicit action and offers anonymous fallback',async()=>{
+ const [page,script]=await Promise.all(['dist/support.php','dist/support.js'].map(p=>readFile(new URL(p,import.meta.url),'utf8')));
+ assert.ok(page.includes('id="donorEmail"')&&page.includes('id="donorConsent"')&&page.includes('id="prepareThanks"'));
+ assert.ok(page.includes('meta name="donation-csrf"'));
+ assert.ok(script.includes('/donation-intent.php'));
+ assert.ok(script.includes('variableSymbol'));
+ assert.ok(script.includes("credentials:'same-origin'"));
+});
