@@ -7,6 +7,7 @@ declare(strict_types=1);
  * Žádné bankovní API tokeny ani údaje dárců do veřejného repozitáře.
  */
 require_once __DIR__ . '/bootstrap.php';
+require_once __DIR__ . '/donation-config.php';
 
 const DONATION_IBAN = 'CZ8220100000000223366333';
 const DONATION_APP = 'Můj DIP';
