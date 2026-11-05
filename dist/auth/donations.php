@@ -185,9 +185,10 @@ function donation_text_amount(int $cents): string {
     return number_format($cents/100, $cents%100===0?0:2, ',', ' ') . ' Kč';
 }
 
-function donation_send(string $to, string $subject, string $body): bool {
+function donation_send(string $to, string $subject, string $body, string $senderApp=DONATION_APP): bool {
+    if (!in_array($senderApp,DONATION_APPS,true)) $senderApp=DONATION_APP;
     if (!filter_var($to, FILTER_VALIDATE_EMAIL) || strpbrk($to, "\r\n") !== false) return false;
-    $headers='From: '.auth_email_header('MŮJ DIP').' <info@jirijanousek.cz>'."\r\n"
+    $headers='From: '.auth_email_header($senderApp).' <info@jirijanousek.cz>'."\r\n"
         ."Reply-To: info@jirijanousek.cz\r\nMIME-Version: 1.0\r\n"
         ."Content-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: 8bit";
     return mail($to, auth_email_header($subject), str_replace("\n","\r\n",$body), $headers);
@@ -231,7 +232,7 @@ function donation_dispatch(): array {
                     ."Jméno: $who\nE-mail dárce: {$donation['email']}\n";
             }
             try {
-                $ok=donation_send($to,$subject,$body);
+                $ok=donation_send($to,$subject,$body,$app);
             } catch (Throwable $e) {
                 $ok=false;
                 error_log('Muj DIP donation mail delivery transport exception');
