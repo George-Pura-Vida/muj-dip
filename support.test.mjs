@@ -43,3 +43,32 @@ test('opt-in donation interface requires explicit action and offers anonymous fa
  assert.ok(script.includes('variableSymbol'));
  assert.ok(script.includes("credentials:'same-origin'"));
 });
+
+test('email-linked donation is primary; QR is not shown before user choice',async()=>{
+ const [page,script,css]=await Promise.all(['dist/support.php','dist/support.js','dist/support.css']
+   .map(p=>readFile(new URL(p,import.meta.url),'utf8')));
+ assert.ok(page.includes('Příspěvek s poděkováním e-mailem'));
+ assert.ok(page.includes('id="prepareThanks"'));
+ assert.ok(page.includes('id="donorEmail"'));
+ assert.ok(page.includes('id="donorConsent"'));
+ assert.ok(page.includes('id="anonymousChoice"'));
+ assert.ok(page.includes('id="prepareAnonymous"'));
+ assert.ok(page.indexOf('id="prepareThanks"')<page.indexOf('id="prepareAnonymous"'),
+   'email-linked flow should appear before anonymous alternative');
+ assert.ok(page.includes('id="paymentPlaceholder"'));
+ assert.ok(page.includes('id="paymentPreview" hidden'));
+ assert.ok(script.includes("qrMode='none'"));
+ assert.ok(script.includes("qrMode='linked'"));
+ assert.ok(script.includes("qrMode='anonymous'"));
+ assert.ok(script.includes("if(qrMode==='none' || (qrMode==='linked' && !variableSymbol))"),
+   'QR must not render in default mode');
+ assert.ok(script.includes('submittedEmail=donorEmail.value.trim()'),
+   'email input must be snapshotted on submission');
+ assert.ok(script.includes('donorEmail.value.trim()!==submittedEmail'),
+   'changed recipient email must invalidate payment preview');
+ assert.ok(script.includes('prepareAnonymous.addEventListener'));
+ assert.ok(css.includes('.payment-placeholder'));
+ assert.ok(css.includes('.anonymous-choice'));
+ assert.ok(page.includes('/support.js?v=3') && page.includes('/support.css?v=3'),
+   'browser assets must be versioned to invalidate prior cache');
+});
