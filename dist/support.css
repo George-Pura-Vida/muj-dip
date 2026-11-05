@@ -17,3 +17,20 @@
 .donation-vs strong{font-size:20px;letter-spacing:1px}
 #donationFeedback{font-weight:600;color:#664618;min-height:1em}
 @media(max-width:760px){.donation-thanks{padding:16px}.donation-vs strong{font-size:19px}}
+
+/* Preferované darování s e-mailem. Anonymní QR až po vědomé volbě. */
+.donation-thanks{margin:22px 0 16px;padding:24px;border:2px solid #c89b42;background:linear-gradient(155deg,#fff7e3,#fffdf6);box-shadow:0 8px 24px #8d66111a}
+.donation-recommended{display:inline-block;margin-bottom:10px;padding:6px 10px;border-radius:100px;background:#efe0bc;color:#62420c;font-size:12px;font-weight:800}
+.donation-thanks h3{font-size:clamp(19px,2vw,23px);line-height:1.25}
+.anonymous-choice{padding:15px 18px;margin:14px 0 0;border:1px solid #cfc4b1;border-radius:12px;background:#faf8f3}
+.anonymous-choice summary{cursor:pointer;font-size:15px;font-weight:700;color:#554736;line-height:1.5}
+.anonymous-choice summary:focus-visible,.anonymous-prepare:focus-visible{outline:3px solid #976720;outline-offset:3px}
+.anonymous-choice p{font-size:14px;color:#5b5347;margin:12px 0}
+.anonymous-prepare{border:1px solid #9a8163;background:#fffefa;color:#513b21;border-radius:9px;font-size:14px;font-weight:700;min-height:46px;padding:10px 16px;cursor:pointer;width:100%}
+.anonymous-prepare:hover{background:#f0e6d8}
+.payment-placeholder{padding:24px 20px;margin:22px 0;text-align:center;border:2px dashed #d5b46e;border-radius:16px;background:#fff8e9}
+.payment-placeholder strong{font-size:17px;color:#684813;line-height:1.5}
+.payment-placeholder p{font-size:14px;color:#64543a;margin:12px 0 0;line-height:1.65}
+.payment-placeholder p strong{font-size:inherit}
+.payment-card{position:relative}
+@media(max-width:760px){.donation-thanks{padding:19px 17px}.payment-placeholder{padding:20px 14px}.anonymous-choice{padding:14px}}
