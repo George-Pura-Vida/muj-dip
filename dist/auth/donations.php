@@ -113,6 +113,31 @@ function donation_fio_column(array $row, int $number): mixed {
     return $row['column'.$number]['value'] ?? $row['column_'.$number]['value'] ?? null;
 }
 
+/**
+ * Fio API JSON poskytuje datum jako UNIX čas v milisekundách.
+ * Přijímáme také starší / testovací řetězcový formát yyyy-mm-dd+TZ.
+ */
+function donation_fio_date(mixed $raw): ?string {
+    $number = null;
+    if (is_int($raw) || (is_string($raw) && preg_match('/\A[0-9]{10}(?:[0-9]{3})?\z/D', $raw))) {
+        $number = (string)$raw;
+    } elseif (is_float($raw) && is_finite($raw) && $raw >= 1000000000) {
+        $number = (string)(int)$raw;
+    }
+    if ($number !== null) {
+        $seconds = strlen($number) >= 13
+            ? intdiv((int)$number, 1000)
+            : (int)$number;
+        if ($seconds < 946684800 || $seconds > 4102444800) return null;
+        return (new DateTimeImmutable('@'.$seconds))
+            ->setTimezone(new DateTimeZone('Europe/Prague'))->format('Y-m-d');
+    }
+    if (!is_string($raw)) return null;
+    if (!preg_match('/\A([0-9]{4})-([0-9]{2})-([0-9]{2})(?:[+T ].*)?\z/D', $raw, $m)) return null;
+    if (!checkdate((int)$m[2], (int)$m[3], (int)$m[1])) return null;
+    return $m[1].'-'.$m[2].'-'.$m[3];
+}
+
 /** Přijímá pouze skutečné bankovní položky z důvěryhodného serverového volání Fio. */
 function donation_match_transactions(array $payload): int {
     $info=$payload['accountStatement']['info'] ?? null;
@@ -130,11 +155,11 @@ function donation_match_transactions(array $payload): int {
         $vs=(string)(donation_fio_column($row,5) ?? '');
         $currency=strtoupper(trim((string)(donation_fio_column($row,14) ?? $info['currency'] ?? '')));
         $amount=donation_bank_cents(donation_fio_column($row,1));
-        $date=(string)(donation_fio_column($row,0) ?? '');
+        $date=donation_fio_date(donation_fio_column($row,0));
         if (!preg_match('/\A[0-9]{1,20}\z/D',$id)
             || !preg_match('/\A[0-9]{8}\z/D',$vs)
             || $currency!=='CZK' || $amount===null
-            || !preg_match('/\A\d{4}-\d{2}-\d{2}/D',$date)) continue;
+            || $date===null) continue;
 
         // Posuzujeme pouze přijaté prostředky, na přesnou částku,
         // pod unikátním VS a po vytvoření QR platebního požadavku.
@@ -143,7 +168,7 @@ function donation_match_transactions(array $payload): int {
             WHERE vs=? AND amount_cents=? AND status='pending'
               AND date(created_at,'unixepoch','-1 day') <= ?
               AND NOT EXISTS (SELECT 1 FROM donations WHERE fio_id=?)");
-        $q->execute([time(),$id,$vs,$amount,substr($date,0,10),$id]);
+        $q->execute([time(),$id,$vs,$amount,$date,$id]);
         $matched += $q->rowCount();
     }
     return $matched;
@@ -169,10 +194,10 @@ function donation_dispatch(): array {
     $db=donation_db();
     $sent=['donor'=>0,'admin'=>0,'failed'=>0];
     $rows=$db->query("SELECT * FROM donations WHERE status='paid'
-        AND (email_status IN ('pending','failed') OR admin_status IN ('pending','failed'))
+        AND email_status IN ('pending','failed')
         ORDER BY id LIMIT 50")->fetchAll();
     foreach ($rows as $donation) {
-        foreach (['email_status'=>'donor','admin_status'=>'admin'] as $field=>$kind) {
+        foreach (['email_status'=>'donor'] as $field=>$kind) {
             if (!in_array($donation[$field],['pending','failed'],true)) continue;
             $q=$db->prepare("UPDATE donations SET $field='sending'
                 WHERE id=? AND $field IN ('pending','failed')");
