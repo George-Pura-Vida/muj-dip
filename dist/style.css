@@ -128,3 +128,9 @@ header #topNav .menu-pages button[data-tab]:focus-visible{outline:3px solid #256
   .tabs button>span{font-size:12px}
 }
 @media print{.toolbar{display:none!important}}
+
+/* Jednotné kontaktní formuláře: oslovení a rozložení čtyř polí */
+.contact-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+.contact-form select{display:block;width:100%;min-width:0;min-height:50px;padding:16px 14px;border:1px solid #d8cdbb;border-radius:9px;background:#fff;color:#242019;font:14px var(--font)}
+.contact-form select:focus-visible{outline:2px solid #ad8746;outline-offset:2px}
+@media(max-width:600px){.contact-fields{grid-template-columns:1fr}.contact-form select{font-size:16px}}
