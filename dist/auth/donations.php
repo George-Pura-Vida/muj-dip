@@ -230,7 +230,7 @@ function donation_dispatch(): array {
             $app=DONATION_APPS[$donation['app']??'muj-dip']??DONATION_APP;
             try {
                 $message=donation_mail_donor($donation);
-                $ok=donation_send($donation['email'],$message['subject'],$message['text'],$app);
+                $ok=donation_send($donation['email'],$message['subject'],$message['text'],$app,$message['html']);
             } catch (Throwable $e) {
                 $ok=false;
                 error_log('Muj DIP donation mail delivery transport exception');
