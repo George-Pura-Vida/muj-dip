@@ -98,6 +98,7 @@ function inbound_dispatch(?callable $send = null): array {
         WHERE fio_id=? AND notice_status='sending'");
     $legacy = $db->prepare("UPDATE donations SET admin_status=?
         WHERE fio_id=? AND admin_status IN ('pending','failed')");
+    $source = $db->prepare("SELECT app FROM donations WHERE fio_id=? LIMIT 1");
     foreach ($rows as $tx) {
         $id = (string)$tx['fio_id'];
         $claim->execute([$id]);
@@ -111,8 +112,15 @@ function inbound_dispatch(?callable $send = null): array {
         $sender = $tx['sender_name'] !== '' ? $tx['sender_name'] : 'Banka neuvedla';
         $message = $tx['message_text'] !== '' ? $tx['message_text'] : 'Neuvedena';
         $vs = $tx['vs'] !== '' ? $tx['vs'] : 'Neuveden';
-        $subject = '💰 Můj DIP: příchozí platba ' . $money;
-        $body = "Na účet používaný aplikací Můj DIP byla připsána platba.\n\n"
+        // Zdroj odvozujeme výhradně od bankou spárovaného Fio ID, nikoli od
+        // libovolného textu odesílatele. Neoznačené platby zůstávají obecné.
+        $source->execute([$id]);
+        $appCode = $source->fetchColumn();
+        $appName = is_string($appCode) ? (DONATION_APPS[$appCode] ?? '') : '';
+        $subject = ($appName !== '' ? '💛 '.$appName.': přijatý příspěvek ' : '💰 Fio: příchozí platba ') . $money;
+        $body = ($appName !== ''
+            ? "Potvrzený příspěvek pro aplikaci $appName.\n\n"
+            : "Na účet Fio byla připsána platba (aplikace nezjištěna).\n\n")
             . "Částka: $money\n"
             . "Datum připsání: {$tx['paid_on']}\n"
             . "Odesílatel (dle banky): $sender\n"
