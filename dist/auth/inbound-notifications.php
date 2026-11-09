@@ -84,8 +84,8 @@ function inbound_collect(array $payload): int {
  * nikoli skutečné doručení do příjemcovy schránky.
  */
 function inbound_dispatch(?callable $send = null): array {
-    $send ??= static fn(string $to, string $subject, string $text): bool
-        => donation_send($to,$subject,$text);
+    $send ??= static fn(string $to, string $subject, string $text, string $html): bool
+        => donation_send($to,$subject,$text,DONATION_APP,$html);
     $db = donation_db();
     inbound_init($db);
     $stats = ['admin' => 0, 'failed' => 0];
