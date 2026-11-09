@@ -55,6 +55,16 @@ serverový cron a e-mailový transport.
 - **Pořadí WebKitty deploymentu:** nejdřív Můj DIP main, zkontrolovat funkčnost nové brány, potom main v Moje renta, Moje krypto, Můj kmen a Můj obchod.
 - **Živý test:** v každé aplikaci vytvořit QR s e-mailem, zaplatit, ověřit skutečné doručení zprávy dárci i správci a při dalším Cronu žádné duplikáty. Jestli e-mail nedorazí, spusťte diagnostiku `dist/cron/donation-status.php` na hostingu Můj DIP: ukáže poslední synchronizaci Fio, počet požadavků a stav e-mailů po aplikacích. Nepotvrzený požadavek `pending` sám o sobě nedokazuje připsání platby. GitHub testy nejsou dokladem živého doručení.
 
+## Grafické a personalizované e-maily (všech pět aplikací)
+
+- Grafický styl vychází z hlavního webu jirijanousek.cz: tmavé záhlaví JIŘÍ JANOUŠEK / JJ, zlatá barva, přehled částky, podpis a kontakty. Responzivní **HTML s textovou alternativou** (MIME multipart/alternative), bez externích sledovacích obrázků.
+- Oba typy zpráv centrálně tvoří soubor dist/auth/donation-mail.php pro Můj DIP, Moje renta, Moje krypto, Můj kmen a Můj obchod. Oznámení správci obsahuje bankovní informace a při spárování také e-mail a jméno z formuláře.
+- Jméno a příjmení se používá pro oslovení: **Jiří Janoušek → pane Janoušku**, **Pavel Sova → pane Sovo**, **Jana Nováková → paní Nováková**. Pokud jméno chybí nebo je nejednoznačné, zůstává bezpečné **Dobrý den,**. Skloňování nemusí obsáhnout všechny varianty.
+- Bez skutečného bankovního potvrzení se žádné poděkování dárci neodesílá. Anonymní platby a jiné nespárované pohyby dostávají pouze neutrální administrátorské oznámení.
+- HTML escapuje dynamická data, MIME části jsou Base64. From a Reply-To zůstávají info@jirijanousek.cz. Žádný bankovní token se nenačítá do zpráv.
+- **Přeprava zůstává přes PHP mail() na hostingu Můj DIP**, nejde o přímé použití soukromého SMTP nastavení hlavního webu. Doručení, SPF/DKIM a spam složky musí být ověřeny po WebKitty deploymentu.
+- Testy: php donation-mail.test.php, php donations.test.php a GitHub Actions. Skutečné doručení obou zpráv ověří reálná platba s VS.
+
 ## Test
 
 1. Vytvořit QR s poděkováním pro vlastní e-mail a 1 Kč.
