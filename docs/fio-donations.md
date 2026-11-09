@@ -47,13 +47,13 @@ serverový cron a e-mailový transport.
 ## Společná platební logika pro čtyři weby
 
 - **Můj DIP** je jediný platební backend: vlastní donation-intent.php, veřejná brána donation-intent-cross.php a jediný CLI cron/fio-sync.php (každých 5 minut).
-- **Moje renta**, **Moje krypto** a **Můj kmen** volají z veřejné stránky /support.html přes HTTPS a CORS službu Můj DIP. Brána podle povoleného HTTP Origin určí, z jaké aplikace příspěvek pochází.
+- **Moje renta**, **Moje krypto**, **Můj kmen** a **Můj obchod** volají z veřejné stránky /support.html přes HTTPS a CORS službu Můj DIP. Brána podle povoleného HTTP Origin určí, z jaké aplikace příspěvek pochází.
 - Klient zadá e-mail, volitelně jméno a částku, potvrdí jednorázové poděkování a obdrží QR s unikátním osmimístným VS. Pokud endpoint selže, formulář zobrazí chybu; lze přispět anonymním QR bez e-mailu.
-- Po spárování příchozí platby s částkou, měnou, VS, bankovním ID a datem odejde jednomu dárci jediné poděkování s názvem správné aplikace. Správce obdrží na Fio ID přesně jedno oznámení za pohyb.
+- Po spárování příchozí platby s částkou, měnou, VS, bankovním ID a datem odejde jednomu dárci jediné poděkování s názvem správné aplikace. Správce obdrží na Fio ID přesně jedno oznámení za pohyb. Předmět správci obsahuje název správné aplikace, pokud byla platba spárována přes VS; u neoznačených plateb používá neutrální označení Fio.
 - Soukromá databáze na Můj DIP automaticky doplní existující řádky značkou muj-dip. Uživatelská data ostatních webů se nemění.
 - Bankovní token, SQLite databáze dárců a Fio Cron zůstávají **pouze na Můj DIP**, nikdy se nekopírují do dalších webů, JavaScriptu ani GitHubu.
-- **Pořadí WebKitty deploymentu:** nejdřív Můj DIP main, zkontrolovat funkčnost nové brány, potom main v Moje renta, Moje krypto a Můj kmen.
-- **Živý test:** v každé aplikaci vytvořit QR s e-mailem, zaplatit, ověřit skutečné doručení zprávy dárci i správci a při dalším Cronu žádné duplikáty. GitHub testy nejsou dokladem živého doručení.
+- **Pořadí WebKitty deploymentu:** nejdřív Můj DIP main, zkontrolovat funkčnost nové brány, potom main v Moje renta, Moje krypto, Můj kmen a Můj obchod.
+- **Živý test:** v každé aplikaci vytvořit QR s e-mailem, zaplatit, ověřit skutečné doručení zprávy dárci i správci a při dalším Cronu žádné duplikáty. Jestli e-mail nedorazí, spusťte diagnostiku `dist/cron/donation-status.php` na hostingu Můj DIP: ukáže poslední synchronizaci Fio, počet požadavků a stav e-mailů po aplikacích. Nepotvrzený požadavek `pending` sám o sobě nedokazuje připsání platby. GitHub testy nejsou dokladem živého doručení.
 
 ## Test
 
