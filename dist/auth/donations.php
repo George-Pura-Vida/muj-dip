@@ -12,6 +12,7 @@ require_once __DIR__ . '/donation-config.php';
 const DONATION_IBAN = 'CZ8220100000000223366333';
 const DONATION_APP = 'Můj DIP';
 const DONATION_APPS = ['muj-dip'=>'Můj DIP','moje-renta'=>'Moje renta','moje-krypto'=>'Moje krypto','muj-kmen'=>'Můj kmen','muj-obchod'=>'Můj obchod'];
+require_once __DIR__ . '/donation-mail.php';
 
 function donation_db(): PDO {
     static $db;
@@ -185,13 +186,28 @@ function donation_text_amount(int $cents): string {
     return number_format($cents/100, $cents%100===0?0:2, ',', ' ') . ' Kč';
 }
 
-function donation_send(string $to, string $subject, string $body, string $senderApp=DONATION_APP): bool {
-    if (!in_array($senderApp,DONATION_APPS,true)) $senderApp=DONATION_APP;
+/** MIME multipart/alternative: stejný HTML + textový koncept jako hlavní web. */
+function donation_mime_parts(string $plain, string $html, string $boundary): string {
+    $part = static fn(string $type,string $text): string =>
+        '--'.$boundary."\r\nContent-Type: ".$type."; charset=UTF-8\r\n"
+        ."Content-Transfer-Encoding: base64\r\n\r\n"
+        .chunk_split(base64_encode($text), 76, "\r\n");
+    return $part('text/plain',$plain).$part('text/html',$html).'--'.$boundary."--\r\n";
+}
+
+function donation_send(string $to, string $subject, string $body, string $senderApp=DONATION_APP, ?string $html=null): bool {
+    if (!in_array($senderApp, DONATION_APPS, true)) $senderApp=DONATION_APP;
     if (!filter_var($to, FILTER_VALIDATE_EMAIL) || strpbrk($to, "\r\n") !== false) return false;
-    $headers='From: '.auth_email_header($senderApp).' <info@jirijanousek.cz>'."\r\n"
-        ."Reply-To: info@jirijanousek.cz\r\nMIME-Version: 1.0\r\n"
-        ."Content-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: 8bit";
-    return mail($to, auth_email_header($subject), str_replace("\n","\r\n",$body), $headers);
+    $headers='From: '.auth_email_header('Jiří Janoušek · '.$senderApp).' <info@jirijanousek.cz>'."\r\n"
+        ."Reply-To: info@jirijanousek.cz\r\nMIME-Version: 1.0\r\n";
+    if ($html === null) {
+        // Zachovat kompatibilitu případných starších interních volání.
+        $headers .= "Content-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: 8bit";
+        return mail($to, auth_email_header($subject), str_replace("\n","\r\n",$body),$headers);
+    }
+    $boundary = 'jj_donation_'.bin2hex(random_bytes(12));
+    $headers .= 'Content-Type: multipart/alternative; boundary="'.$boundary.'"';
+    return mail($to, auth_email_header($subject), donation_mime_parts($body,$html,$boundary),$headers);
 }
 
 /**
@@ -211,28 +227,11 @@ function donation_dispatch(): array {
                 WHERE id=? AND $field IN ('pending','failed')");
             $q->execute([(int)$donation['id']]);
             if ($q->rowCount()!==1) continue;
-            $amount=donation_text_amount((int)$donation['amount_cents']);
             $app=DONATION_APPS[$donation['app']??'muj-dip']??DONATION_APP;
-            $who=($donation['donor_name']!=='' ? $donation['donor_name'] : 'dárce');
-            if ($kind==='donor') {
-                $to=$donation['email'];
-                $subject='💛 Děkuji za podporu projektu '.$app;
-                $body="Dobrý den,\n\n💛 Moc Vám děkuji za dobrovolnou podporu projektu $app!\n\n"
-                    ."Na náš účet byla připsána Vaše platba ve výši $amount.\n\n"
-                    ."Pomáháte tak rozvíjet aplikaci a udržovat ji dostupnou.\n"
-                    ."Velmi si Vaší podpory vážím. 🌟\n\n"
-                    ."S vděčností,\nJiří Janoušek\nhttps://jirijanousek.cz/\n\n"
-                    ."Toto je jednorázové potvrzení přijatého příspěvku, nikoli obchodní nabídka.";
-            } else {
-                $to=AUTH_APPROVER_EMAIL;
-                $subject='💛 Můj DIP: přijat příspěvek '.$amount;
-                $body="Můj DIP – nově přijatý příspěvek\n\n"
-                    ."Částka: $amount\nVariabilní symbol: {$donation['vs']}\n"
-                    ."Fio ID: {$donation['fio_id']}\n"
-                    ."Jméno: $who\nE-mail dárce: {$donation['email']}\n";
-            }
+            $message=donation_mail_donor($donation);
+            $to=$donation['email'];
             try {
-                $ok=donation_send($to,$subject,$body,$app);
+                $ok=donation_send($to,$message['subject'],$message['text'],$app,$message['html']);
             } catch (Throwable $e) {
                 $ok=false;
                 error_log('Muj DIP donation mail delivery transport exception');
