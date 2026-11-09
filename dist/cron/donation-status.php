@@ -33,6 +33,14 @@ try {
             number_format(((int)$payment['amount_cents'])/100,2,'.',''),
             $payment['currency'], $payment['paid_on'], $payment['notice_status']);
     }
+    echo 'Donation requests by application (no personal data):' . PHP_EOL;
+    $appCounts = $db->query("SELECT app,status,email_status,COUNT(*) AS count FROM donations
+        GROUP BY app,status,email_status ORDER BY app,status,email_status")->fetchAll(PDO::FETCH_ASSOC);
+    if ($appCounts === []) echo 'No recorded donation requests.' . PHP_EOL;
+    foreach ($appCounts as $item) {
+        printf("app=%s | payment=%s | donor_mail=%s | count=%d\n",
+            $item['app'], $item['status'], $item['email_status'], (int)$item['count']);
+    }
     $q = $db->query("SELECT status, email_status, admin_status, COUNT(*) AS count
         FROM donations GROUP BY status, email_status, admin_status ORDER BY status, email_status, admin_status");
     $all = $q->fetchAll(PDO::FETCH_ASSOC);
