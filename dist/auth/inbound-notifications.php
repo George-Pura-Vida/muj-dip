@@ -84,7 +84,8 @@ function inbound_collect(array $payload): int {
  * nikoli skutečné doručení do příjemcovy schránky.
  */
 function inbound_dispatch(?callable $send = null): array {
-    $send ??= 'donation_send';
+    $send ??= static fn(string $to, string $subject, string $text, string $html): bool
+        => donation_send($to,$subject,$text,DONATION_APP,$html);
     $db = donation_db();
     inbound_init($db);
     $stats = ['admin' => 0, 'failed' => 0];
@@ -98,7 +99,7 @@ function inbound_dispatch(?callable $send = null): array {
         WHERE fio_id=? AND notice_status='sending'");
     $legacy = $db->prepare("UPDATE donations SET admin_status=?
         WHERE fio_id=? AND admin_status IN ('pending','failed')");
-    $source = $db->prepare("SELECT app FROM donations WHERE fio_id=? LIMIT 1");
+    $source = $db->prepare("SELECT app,donor_name,email FROM donations WHERE fio_id=? LIMIT 1");
     foreach ($rows as $tx) {
         $id = (string)$tx['fio_id'];
         $claim->execute([$id]);
@@ -109,28 +110,19 @@ function inbound_dispatch(?callable $send = null): array {
             $money = number_format(((int)$tx['amount_cents']) / 100, 2, ',', ' ')
                 . ' ' . $tx['currency'];
         }
-        $sender = $tx['sender_name'] !== '' ? $tx['sender_name'] : 'Banka neuvedla';
-        $message = $tx['message_text'] !== '' ? $tx['message_text'] : 'Neuvedena';
-        $vs = $tx['vs'] !== '' ? $tx['vs'] : 'Neuveden';
-        // Zdroj odvozujeme výhradně od bankou spárovaného Fio ID, nikoli od
-        // libovolného textu odesílatele. Neoznačené platby zůstávají obecné.
+        // Pouze skutečně spárovaný bankovní pohyb získává označení daru.
         $source->execute([$id]);
-        $appCode = $source->fetchColumn();
-        $appName = is_string($appCode) ? (DONATION_APPS[$appCode] ?? '') : '';
-        $subject = ($appName !== '' ? '💛 '.$appName.': přijatý příspěvek ' : '💰 Fio: příchozí platba ') . $money;
-        $body = ($appName !== ''
-            ? "Potvrzený příspěvek pro aplikaci $appName.\n\n"
-            : "Na účet Fio byla připsána platba (aplikace nezjištěna).\n\n")
-            . "Částka: $money\n"
-            . "Datum připsání: {$tx['paid_on']}\n"
-            . "Odesílatel (dle banky): $sender\n"
-            . "Zpráva pro příjemce: $message\n"
-            . "Variabilní symbol: $vs\n"
-            . "Fio ID pohybu: $id\n\n"
-            . "Jde o jednorázové upozornění na příchozí bankovní platbu. "
-            . "Pokud nebyla označena jako dar, ověřte její účel v bankovnictví.\n";
+        $matched = $source->fetch(PDO::FETCH_ASSOC) ?: null;
+        $message = donation_mail_admin([
+            'money'=>$money,
+            'sender_name'=>$tx['sender_name'] !== '' ? $tx['sender_name'] : 'Banka neuvedla',
+            'paid_on'=>$tx['paid_on'],
+            'vs'=>$tx['vs'] !== '' ? $tx['vs'] : 'Neuveden',
+            'message_text'=>$tx['message_text'] !== '' ? $tx['message_text'] : 'Neuvedena',
+            'fio_id'=>$id,
+        ],$matched);
         try {
-            $ok = (bool)$send(AUTH_APPROVER_EMAIL, $subject, $body);
+            $ok = (bool)$send(AUTH_APPROVER_EMAIL, $message['subject'], $message['text'], $message['html']);
         } catch (Throwable $e) {
             $ok = false;
             error_log('MUJ-DIP inbound notification transport exception');
