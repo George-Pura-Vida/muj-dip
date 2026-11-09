@@ -11,7 +11,7 @@ require_once __DIR__ . '/donation-config.php';
 
 const DONATION_IBAN = 'CZ8220100000000223366333';
 const DONATION_APP = 'Můj DIP';
-const DONATION_APPS = ['muj-dip'=>'Můj DIP','moje-renta'=>'Moje renta','moje-krypto'=>'Moje krypto','muj-kmen'=>'Můj kmen'];
+const DONATION_APPS = ['muj-dip'=>'Můj DIP','moje-renta'=>'Moje renta','moje-krypto'=>'Moje krypto','muj-kmen'=>'Můj kmen','muj-obchod'=>'Můj obchod'];
 
 function donation_db(): PDO {
     static $db;
