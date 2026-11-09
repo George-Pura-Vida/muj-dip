@@ -198,7 +198,7 @@ function donation_mime_parts(string $plain, string $html, string $boundary): str
 function donation_send(string $to, string $subject, string $body, string $senderApp=DONATION_APP, ?string $html=null): bool {
     if (!in_array($senderApp, DONATION_APPS, true)) $senderApp=DONATION_APP;
     if (!filter_var($to, FILTER_VALIDATE_EMAIL) || strpbrk($to, "\r\n") !== false) return false;
-    $headers='From: '.auth_email_header('Jiří Janoušek · '.$senderApp).' <info@jirijanousek.cz>'."\r\n"
+    $headers='From: '.auth_email_header($senderApp).' <info@jirijanousek.cz>'."\r\n"
         ."Reply-To: info@jirijanousek.cz\r\nMIME-Version: 1.0\r\n";
     if ($html === null) {
         // Zachovat kompatibilitu případných starších interních volání.
@@ -228,10 +228,9 @@ function donation_dispatch(): array {
             $q->execute([(int)$donation['id']]);
             if ($q->rowCount()!==1) continue;
             $app=DONATION_APPS[$donation['app']??'muj-dip']??DONATION_APP;
-            $message=donation_mail_donor($donation);
-            $to=$donation['email'];
             try {
-                $ok=donation_send($to,$message['subject'],$message['text'],$app,$message['html']);
+                $message=donation_mail_donor($donation);
+                $ok=donation_send($donation['email'],$message['subject'],$message['text'],$app);
             } catch (Throwable $e) {
                 $ok=false;
                 error_log('Muj DIP donation mail delivery transport exception');

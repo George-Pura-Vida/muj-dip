@@ -84,8 +84,8 @@ function inbound_collect(array $payload): int {
  * nikoli skutečné doručení do příjemcovy schránky.
  */
 function inbound_dispatch(?callable $send = null): array {
-    $send ??= static fn(string $to, string $subject, string $text, string $html): bool
-        => donation_send($to,$subject,$text,DONATION_APP,$html);
+    $send ??= static fn(string $to, string $subject, string $text): bool
+        => donation_send($to,$subject,$text);
     $db = donation_db();
     inbound_init($db);
     $stats = ['admin' => 0, 'failed' => 0];
@@ -110,18 +110,18 @@ function inbound_dispatch(?callable $send = null): array {
             $money = number_format(((int)$tx['amount_cents']) / 100, 2, ',', ' ')
                 . ' ' . $tx['currency'];
         }
-        // Pouze skutečně spárovaný bankovní pohyb získává označení daru.
-        $source->execute([$id]);
-        $matched = $source->fetch(PDO::FETCH_ASSOC) ?: null;
-        $message = donation_mail_admin([
-            'money'=>$money,
-            'sender_name'=>$tx['sender_name'] !== '' ? $tx['sender_name'] : 'Banka neuvedla',
-            'paid_on'=>$tx['paid_on'],
-            'vs'=>$tx['vs'] !== '' ? $tx['vs'] : 'Neuveden',
-            'message_text'=>$tx['message_text'] !== '' ? $tx['message_text'] : 'Neuvedena',
-            'fio_id'=>$id,
-        ],$matched);
         try {
+            // Pouze skutečně spárovaný bankovní pohyb získává označení daru.
+            $source->execute([$id]);
+            $matched = $source->fetch(PDO::FETCH_ASSOC) ?: null;
+            $message = donation_mail_admin([
+                'money'=>$money,
+                'sender_name'=>$tx['sender_name'] !== '' ? $tx['sender_name'] : 'Banka neuvedla',
+                'paid_on'=>$tx['paid_on'],
+                'vs'=>$tx['vs'] !== '' ? $tx['vs'] : 'Neuveden',
+                'message_text'=>$tx['message_text'] !== '' ? $tx['message_text'] : 'Neuvedena',
+                'fio_id'=>$id,
+            ],$matched);
             $ok = (bool)$send(AUTH_APPROVER_EMAIL, $message['subject'], $message['text'], $message['html']);
         } catch (Throwable $e) {
             $ok = false;
