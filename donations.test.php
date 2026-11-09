@@ -104,7 +104,7 @@ $db->exec("DELETE FROM fio_inbound_notifications WHERE fio_id IN
 
 
 $linked=[];
-foreach (['moje-renta','moje-krypto','muj-kmen'] as $app) {
+foreach (['moje-renta','moje-krypto','muj-kmen','muj-obchod'] as $app) {
     $intentApp=donation_create_intent('support-test@example.org','Dárce',100,$app);
     $q=$db->prepare("SELECT app,status,email_status FROM donations WHERE vs=?");
     $q->execute([$intentApp['vs']]);
@@ -121,11 +121,19 @@ $crossPayments=$payload([
     $bankRow('1234567891',1.0,'CZK',$linked[0]['vs']),
     $bankRow('1234567892',1.0,'CZK',$linked[1]['vs']),
     $bankRow('1234567893',1.0,'CZK',$linked[2]['vs']),
+    $bankRow('1234567894',1.0,'CZK',$linked[3]['vs']),
 ]);
-check(donation_match_transactions($crossPayments)===3,'Sister-app payments were not matched centrally');
+check(donation_match_transactions($crossPayments)===4,'Sister-app payments were not matched centrally');
 check(donation_match_transactions($crossPayments)===0,'Sister-app payments matched repeatedly');
-check(inbound_collect($crossPayments)===3,'Central admin alerts not recorded for sister apps');
-check(inbound_dispatch($mailMock)['admin']===3,'Central admin alerts not sent once for sister apps');
+check(inbound_collect($crossPayments)===4,'Central admin alerts not recorded for sister apps');
+check(inbound_dispatch($mailMock)['admin']===4,'Central admin alerts not sent once for sister apps');
+$lastFour = array_slice($sent,-4);
+foreach (array_keys(DONATION_APPS) as $sourceApp) {
+    if ($sourceApp === 'muj-dip') continue;
+    $expected = DONATION_APPS[$sourceApp];
+    check(count(array_filter($lastFour,static fn(array $m):bool => str_contains($m['subject'], $expected)))===1,
+        'Admin notification must identify the originating sister app: '.$expected);
+}
 check(inbound_dispatch($mailMock)['admin']===0,'Sister-app admin alerts repeated');
 foreach ($linked as $row) {
     $q=$db->prepare("SELECT app,status,email_status FROM donations WHERE vs=?");
@@ -135,12 +143,13 @@ foreach ($linked as $row) {
         'Sister-app record lost correct app or email status');
     $db->prepare("DELETE FROM donations WHERE vs=?")->execute([$row['vs']]);
 }
-$db->exec("DELETE FROM fio_inbound_notifications WHERE fio_id IN ('1234567891','1234567892','1234567893')");
+$db->exec("DELETE FROM fio_inbound_notifications WHERE fio_id IN ('1234567891','1234567892','1234567893','1234567894')");
 check(file_exists(__DIR__.'/dist/donation-intent-cross.php'),'Cross-origin endpoint missing');
 $endpoint=(string)file_get_contents(__DIR__.'/dist/donation-intent-cross.php');
 check(str_contains($endpoint,"'https://moje-renta.jirijanousek.cz'=>'moje-renta'")
     && str_contains($endpoint,"'https://moje-krypto.jirijanousek.cz'=>'moje-krypto'")
     && str_contains($endpoint,"'https://muj-kmen.jirijanousek.cz'=>'muj-kmen'")
+    && str_contains($endpoint,"'https://muj-obchod.jirijanousek.cz'=>'muj-obchod'")
     && !str_contains($endpoint,'Access-Control-Allow-Credentials'),
     'Cross-origin donation bridge must whitelist origins and never use credentials');
 
