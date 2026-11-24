@@ -50,6 +50,7 @@ function auth_query(string $sql, array $params = []): PDOStatement {
     $q = auth_db()->prepare($sql); $q->execute($params); return $q;
 }
 function auth_headers(): void {
+    header('X-Robots-Tag: noindex, nofollow, noarchive');
     header('Cache-Control: private, no-store, max-age=0');
     header('Pragma: no-cache'); header('Vary: Cookie');
     header('X-Content-Type-Options: nosniff'); header('X-Frame-Options: DENY');
@@ -82,9 +83,10 @@ function auth_is_admin(array $u): bool {
     return (bool)$u['verified'] && strtolower($u['email']) === AUTH_APPROVER_EMAIL;
 }
 function auth_approved(array $u): bool {
-    return auth_is_admin($u) || ($u['approval_status'] ?? 'pending') === 'approved';
+    return auth_is_admin($u);
 }
 function auth_login(array $u): void {
+    if(!auth_is_admin($u)){http_response_code(403);throw new DomainException('Přístup má pouze vlastník aplikace.');}
     session_regenerate_id(true);
     $_SESSION = ['uid' => (int)$u['id'], 'version' => (int)$u['session_version'],
         'started' => time(), 'seen' => time(), 'csrf' => bin2hex(random_bytes(32))];
@@ -170,6 +172,7 @@ function auth_notify_registration(string $email, string $firstName, string $last
     }
 }
 function auth_process(?array $u): void {
+    if(!in_array($_POST['action']??'', ['login','logout'],true)){http_response_code(403);throw new DomainException('Registrace a změny účtu jsou vypnuté. Přístup má pouze vlastník.');}
     auth_csrf(); $action = auth_text('action',30,true); $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
     auth_limit('post-ip',$ip,150,900);
     if ($action === 'register') {
