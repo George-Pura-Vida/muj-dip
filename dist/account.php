@@ -1,99 +1,15 @@
 <?php
 declare(strict_types=1);
 require __DIR__.'/auth/bootstrap.php';
-if(($_GET['view']??null)==='privacy'){header('Location: /legal.php?view=privacy',true,303);exit;}
-auth_boot();
-$views=['login','register','forgot','reset','verify','profile','confirm-email','privacy','approvals'];
-$view=is_string($_GET['view']??null)&&in_array($_GET['view'],$views,true)?$_GET['view']:'login';
-$error='';$user=null;
-try {
-    auth_db();
-    $user=auth_user();
-    if($_SERVER['REQUEST_METHOD']==='POST')auth_process($user);
-} catch(DomainException $e){$error=$e->getMessage();}
-catch(Throwable $e){http_response_code(503);$error='Služba účtů je dočasně nedostupná. Zkuste to později nebo napište na info@jirijanousek.cz.';error_log('MUJ-DIP account request failed: '.get_class($e));}
-if($view==='profile'&&!$user)auth_redirect('login','Pro úpravu údajů se přihlaste.');
-if($user&&in_array($view,['login','register'],true))auth_redirect('profile');
-if($view==='approvals'&&(!$user||!auth_is_admin($user))){http_response_code(403);exit('Přístup do správy uživatelů má pouze správce.');}
-if($view==='approvals'&&!defined('AUTH_ADMIN_PAGE')){header('Location: /admin.php',true,303);exit;}
-$flash=$_SESSION['flash']??'';unset($_SESSION['flash']);
-$titles=['login'=>'Přihlášení','register'=>'Vytvořit účet','forgot'=>'Zapomenuté heslo','reset'=>'Nové heslo','verify'=>'Potvrdit e-mail','profile'=>'Nastavení účtu','confirm-email'=>'Potvrdit nový e-mail','privacy'=>'Údaje a soukromí','approvals'=>'Správa uživatelů'];
-function field(string $name,string $label,string $type='text',bool $required=true,int $max=150,string $autocomplete=''):void{
-    global $user,$view;
-    $value=$_POST[$name]??($view==='profile'?($user[$name]??''):'');if(!is_string($value))$value='';
-    echo '<label class="field"><span>'.h($label).($required?' <span class="required" aria-hidden="true">*</span>':'').'</span><input name="'.h($name).'" type="'.h($type).'" value="'.h($value).'" maxlength="'.$max.'" '.($required?'required ':'').'autocomplete="'.h($autocomplete).'" '.($name==='ico'?'inputmode="numeric" pattern="[0-9]{8}" ':'').'></label>';
-}
-function password_field(string $name,string $label,string $autocomplete='new-password',bool $required=true):void{
-    echo '<label class="field"><span>'.h($label).($required?' <span class="required" aria-hidden="true">*</span>':'').'</span><span class="password-wrap"><input id="'.h($name).'" name="'.h($name).'" type="password" '.($required?'required ':'').'maxlength="72" '.($autocomplete==='new-password'?'minlength="7" ':'').'autocomplete="'.h($autocomplete).'"><button class="eye" type="button" data-password="'.h($name).'" aria-controls="'.h($name).'" aria-label="Zobrazit heslo: '.h($label).'" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="eye-slash" d="m3 3 18 18"/></svg></button></span></label>';
-}
-function csrf_fields(string $action,bool $token=false):void{
-    echo '<input type="hidden" name="csrf" value="'.h($_SESSION['csrf']).'"><input type="hidden" name="action" value="'.h($action).'">';
-    if($token){$v=$_POST['token']??'';echo '<input type="hidden" name="token" value="'.h(is_string($v)?$v:'').'">';}
-}
-function profile_fields():void{
-    echo '<div class="fields-grid">';field('first_name','Jméno','text',true,150,'given-name');field('last_name','Příjmení','text',true,150,'family-name');
-    field('company','Firma (nepovinné)','text',false,200,'organization');field('ico','IČ (nepovinné)','text',false,8);
-    field('dic','DIČ (nepovinné, např. CZ12345678)','text',false,20);field('phone','Telefon pro kontaktní ověření','tel',true,40,'tel');
-    echo '</div>';field('email','E-mail / přihlašovací jméno','email',true,254,'username');field('address','Adresa — ulice, číslo, PSČ a obec (nepovinné)','text',false,500,'street-address');
-}
-?>
-<!doctype html><html lang="cs"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="same-origin"><title><?= h($titles[$view]) ?> · MŮJ-DIP</title><link rel="icon" href="/icon.svg?v=2" type="image/svg+xml"><link rel="stylesheet" href="/account.css?v=5"><link rel="stylesheet" href="/footer-support.css?v=2"><link rel="stylesheet" href="/home-banner.css?v=1"><script defer src="/account.js?v=2"></script><link rel="stylesheet" href="/guide.css?v=27"><script type="module" src="/guide.js?v=37"></script><link rel="stylesheet" href="/privacy.css?v=1"><script type="module" src="/privacy.js?v=1"></script><link rel="stylesheet" href="/navigation.css?v=9"><script type="module" src="/site-menu.js?v=1"></script></head>
-<body><?php require __DIR__.'/site-header.php'; ?>
-<main class="account-layout<?= $view==='approvals'?' admin-layout':'' ?>"><aside class="welcome"><p class="eyebrow">VÁŠ PLÁN PRO BUDOUCNOST</p><h1>Vaše cíle.<br><span style="color:#9c752e">Náš osobní přístup.</span></h1><p>Chytré řešení pro DIP, firemní příspěvky a finanční budoucnost.</p><a class="dip-home-banner" href="mailto:info@jirijanousek.cz?subject=M%C3%A1m%20z%C3%A1jem%20o%20modelov%C3%BD%20pl%C3%A1n%20DIP" aria-label="Napsat dotaz k dlouhodobému investování"><img src="/dip-home.svg?v=3" alt="Budoucnost, na kterou nejste sami. Vaše investice, příspěvek firmy, daňové výhody. Pro zaměstnavatele: podpořte budoucnost zaměstnanců příspěvkem na DIP; společný limit osvobození je 50 000 Kč ročně na zaměstnance. Pro zaměstnance: vlastní odpočet od základu daně až 48 000 Kč ročně a příspěvek zaměstnavatele v rámci společného limitu 50 000 Kč ročně. Limity platí společně pro příslušné podporované produkty; odpočet není přímá úspora stejné částky. Pro zachování podpory nejméně 120 měsíců a výběr nejdříve v kalendářním roce dosažení 60 let. Výnos není zaručen." width="1672" height="870" fetchpriority="high" decoding="async"></a><p class="welcome-note">Účet uchovává vaše kontaktní údaje. Investiční plán nadále ukládáte samostatně v prohlížeči nebo exportem. Plány se mezi zařízeními automaticky nesynchronizují.</p></aside>
-<section class="account-card" aria-labelledby="account-title"><p class="eyebrow">MŮJ ÚČET</p><h2 id="account-title"><span class="account-title-icon" aria-hidden="true"><?= in_array($view,['login','register'],true)?'👋':($view==='approvals'?'🛡️':'👤') ?></span><?= h($titles[$view]) ?></h2>
-<?php if($error!==''):?><p class="message error" role="alert"><?= h($error) ?></p><?php endif;?>
-<?php if($flash!==''):?><p class="message success" role="status"><?= h($flash) ?></p><?php endif;?>
-<?php if($view==='login'): ?>
-<p class="intro">Po potvrzení e-mailu se Váš přístup aktivuje automaticky. Na schválení správcem nečekáte.</p><form method="post" action="/account.php?view=login"><?php csrf_fields('login');field('email','E-mail / login','email',true,254,'username');password_field('password','Heslo','current-password');?><button class="primary" type="submit">Přihlásit se →</button></form><div class="form-links"><a href="/account.php?view=forgot">Zapomenuté heslo / nový ověřovací odkaz</a></div><p class="divider">Ještě nemáte účet?</p><a class="secondary" href="/account.php?view=register">Zaregistrovat se</a>
-<?php elseif($view==='register'): ?>
-<p class="intro">Pole označená * jsou povinná, včetně telefonu pro následné kontaktní ověření. Zadání čísla nepotvrzuje jeho vlastnictví a aktivace nevyžaduje SMS kód. Adresa a firemní údaje jsou nepovinné.</p><div class="message" role="note"><strong>Aktivace bez čekání:</strong><ol><li>Po registraci otevřete ověřovací odkaz v doručeném e-mailu. Zkontrolujte i složku Spam.</li><li>E-mail se potvrdí, přístup se aktivuje a aplikace Vás automaticky přihlásí.</li></ol></div><form method="post" action="/account.php?view=register"><?php csrf_fields('register');profile_fields();password_field('password','Heslo');password_field('password_confirm','Heslo znovu');?><p class="hint">Použijte alespoň 7 znaků. Heslo můžete zobrazit ikonou oka.</p><label class="check"><input type="checkbox" name="privacy" value="yes" required> <span>Seznámil/a jsem se s <a href="/legal.php?view=privacy" target="_blank" rel="noopener">informacemi o zpracování údajů</a>. Nejde o souhlas s marketingem.</span></label><button class="primary" type="submit">Vytvořit účet →</button></form><p class="form-links"><a href="/account.php?view=login">Už mám účet — přihlásit se</a></p>
-<?php elseif($view==='forgot'): ?>
-<p class="intro">Zadejte registrační e-mail. Odkaz pro obnovu hesla platí 30 minut. U nepotvrzeného účtu odešleme nový ověřovací odkaz.</p><form method="post" action="/account.php?view=forgot"><?php csrf_fields('forgot');field('email','E-mail','email',true,254,'email');?><button class="primary" type="submit">Poslat odkaz e-mailem →</button></form><p class="form-links"><a href="/account.php?view=login">Zpět k přihlášení</a></p>
-<?php elseif($view==='reset'): ?>
-<p class="intro">Nastavte nové heslo. Po změně se přihlásíte znovu; stará přihlášení budou ukončena.</p><form method="post" action="/account.php?view=reset" data-token-form><?php csrf_fields('reset',true);password_field('password','Nové heslo');password_field('password_confirm','Nové heslo znovu');?><button class="primary" type="submit">Uložit nové heslo →</button></form><p class="form-links"><a href="/account.php?view=forgot">Vyžádat nový odkaz</a></p>
-<?php elseif($view==='verify'): ?>
-<p class="intro">Ověřujeme Váš e-mail a přihlašujeme Vás do aplikace. Není třeba mačkat další tlačítko.</p><form method="post" action="/account.php?view=verify" data-token-form data-auto-verify><?php csrf_fields('verify',true);?><button class="primary auto-verify-button" type="submit">Potvrdit e-mail →</button><noscript><style>.auto-verify-button{display:flex!important}</style><p>Pro automatickou aktivaci zapněte JavaScript. Bez něj potvrďte e-mail tlačítkem.</p></noscript></form><p class="form-links"><a href="/account.php?view=forgot">Poslat nový ověřovací odkaz</a></p>
-<?php elseif($view==='confirm-email'): ?>
-<p class="intro">Změnu adresy potvrďte přihlášeni k původnímu účtu.</p><?php if(!$user):?><p class="message">Nejprve se <a href="/account.php?view=login" target="_blank" rel="noopener">přihlaste původním e-mailem v novém okně</a>, potom se vraťte a obnovte tento odkaz z e-mailu.</p><?php endif;?><form method="post" action="/account.php?view=confirm-email" data-token-form><?php csrf_fields('confirm-email',true);?><button class="primary" type="submit">Potvrdit změnu e-mailu →</button></form>
-<?php elseif($view==='profile'): ?>
-<?php if(auth_is_admin($user)):?><a class="secondary" href="/account.php?view=approvals"><span class="account-icon" aria-hidden="true">🛡️</span> Správa uživatelů →</a><?php endif;?><p class="intro">Jste přihlášeni jako <strong><?= h($user['email']) ?></strong>. Zde můžete upravit své údaje.</p><a class="secondary" href="/">Přejít do kalkulačky →</a><form method="post" action="/account.php?view=profile"><?php csrf_fields('profile');profile_fields();?><details><summary>Měním e-mailovou adresu</summary><p class="hint">Zadejte současné heslo. Novou adresu bude nutné potvrdit odkazem v e-mailu.</p><?php password_field('current_password','Současné heslo pro změnu e-mailu','current-password',false);?></details><button class="primary" type="submit">Uložit údaje</button></form><details class="password-change"><summary>Změnit heslo</summary><form method="post" action="/account.php?view=profile"><?php csrf_fields('password');password_field('current_password_change','Současné heslo','current-password');password_field('password','Nové heslo');password_field('password_confirm','Nové heslo znovu');?><button class="primary" type="submit">Změnit heslo</button></form></details><form class="logout" method="post" action="/account.php?view=profile"><?php csrf_fields('logout');?><button class="secondary" type="submit">Odhlásit se</button></form>
-<?php elseif($view==='approvals'): ?>
-<p class="intro">🛡️ Pouze pro správce. Nové účty se aktivují automaticky po ověření e-mailu. Zde můžete spravovat přístup nebo účet trvale smazat.</p>
-<p class="form-links"><a href="/">← Kalkulačka</a> · <a href="/account.php?view=profile">Můj účet</a></p>
-<?php
-$perPage=25;
-$page=max(1,min(100000,(int)($_GET['page']??1)));
-$search=is_string($_GET['q']??null)?trim(substr($_GET['q'],0,150)):'';
-$where='';$params=[];
-if($search!==''){
-    $where=' WHERE instr(lower(email),lower(?))>0 OR instr(lower(first_name||" "||last_name),lower(?))>0 OR instr(phone,?)>0 OR instr(lower(company),lower(?))>0';
-    $params=[$search,$search,$search,$search];
-}
-$total=(int)auth_query('SELECT COUNT(*) FROM users'.$where,$params)->fetchColumn();
-$page=min($page,max(1,(int)ceil($total/$perPage)));
-$accounts=auth_query("SELECT id,email,first_name,last_name,company,ico,dic,phone,address,verified,approval_status,created_at FROM users".$where." ORDER BY created_at DESC,id DESC LIMIT ? OFFSET ?",array_merge($params,[$perPage,($page-1)*$perPage]))->fetchAll(PDO::FETCH_ASSOC);
-$statusLabels=['pending'=>'⏸️ Pozastaveno','approved'=>'✅ Povoleno','rejected'=>'⛔ Zamítnuto'];
-?>
-<form method="get" action="/admin.php" class="admin-search"><label for="admin-search">Hledat podle jména, e-mailu, telefonu nebo firmy</label><div><input id="admin-search" name="q" value="<?= h($search) ?>" maxlength="150" type="search"><button class="primary" type="submit">🔎 Hledat</button><a href="/admin.php">Zrušit filtr</a></div></form>
-<p>Počet účtů<?= $search!==''?' ve výběru':'' ?>: <strong><?= $total ?></strong> · Strana <?= $page ?> / <?= max(1,(int)ceil($total/$perPage)) ?></p>
-<div class="admin-table-wrap" role="region" aria-label="Přehled uživatelů" tabindex="0">
-<table class="admin-table"><caption>Registrovaní uživatelé · údaje jsou přístupné pouze správci</caption><thead><tr><th scope="col">Uživatel</th><th scope="col">Kontakt a firma</th><th scope="col">E-mail</th><th scope="col">Přístup</th><th scope="col">Registrace</th><th scope="col">Správa účtu</th></tr></thead><tbody>
-<?php foreach($accounts as $account): $isAdmin=strtolower($account['email'])===AUTH_APPROVER_EMAIL; ?>
-<tr><th scope="row"><?= h($account['first_name'].' '.$account['last_name']) ?><?= $isAdmin?' · Správce':'' ?><small>ID <?= (int)$account['id'] ?></small></th>
-<td><a href="mailto:<?= h($account['email']) ?>"><?= h($account['email']) ?></a><br><?= h($account['phone'] ?: 'Telefon neuveden') ?><br><?= h($account['company']) ?><details><summary>Další údaje</summary><dl><?php foreach(['ico'=>'IČ','dic'=>'DIČ','address'=>'Adresa'] as $key=>$label): ?><dt><?= h($label) ?></dt><dd><?= h($account[$key] ?: '—') ?></dd><?php endforeach; ?></dl></details></td>
-<td><?= $account['verified']?'✅ Ověřený':'✉️ Nepotvrzený' ?></td>
-<td><?= $isAdmin?'🛡️ Správce':h($statusLabels[$account['approval_status']]??'Neznámý stav') ?><?php if(!$account['verified']): ?><small>Přihlášení vyžaduje potvrzení e-mailu.</small><?php endif; ?></td>
-<td><?= h(gmdate('d. m. Y H:i',(int)$account['created_at'])) ?><small>UTC</small></td>
-<td><?php if(!$isAdmin): ?><form method="post" action="/admin.php"><?php csrf_fields('approval'); ?><input type="hidden" name="user_id" value="<?= (int)$account['id'] ?>"><div class="admin-actions"><button name="decision" value="approved" type="submit">✅ Povolit</button><button name="decision" value="pending" type="submit">⏸️ Pozastavit</button><button name="decision" value="rejected" type="submit">⛔ Zamítnout</button></div></form>
-<details class="delete-account"><summary>🗑️ Smazat účet</summary><p><strong>Nevratně smažete účet <?= h($account['email']) ?>.</strong> Odstraní se profil, ověřovací odkazy a historie změn přístupu. Předchozí přihlášení přestanou fungovat. Exporty a plány uložené v prohlížeči uživatele ani zálohy hostingu se tím nevymažou.</p><form method="post" action="/admin.php"><?php csrf_fields('delete-account'); ?><input type="hidden" name="user_id" value="<?= (int)$account['id'] ?>"><label class="field"><span>Pro potvrzení opište e-mail tohoto účtu</span><input type="email" name="confirm_email" required autocomplete="off" maxlength="254" placeholder="<?= h($account['email']) ?>"></label><label class="check"><input type="checkbox" name="confirm_delete" value="yes" required><span>Potvrzuji trvalé a nevratné smazání tohoto účtu.</span></label><button class="danger" type="submit">Trvale smazat účet</button></form></details>
-<?php else: ?>Správcovský účet je chráněn před smazáním.<?php endif; ?></td></tr>
-<?php endforeach; ?>
-<?php if(!$accounts): ?><tr><td colspan="6">Žádný účet neodpovídá zadanému hledání.</td></tr><?php endif; ?>
-</tbody></table></div>
-<nav class="form-links" aria-label="Stránkování uživatelů"><?php if($page>1): ?><a href="/admin.php?page=<?= $page-1 ?>&amp;q=<?= rawurlencode($search) ?>">← Předchozí</a><?php endif; ?> <?php if($page*$perPage<$total): ?><a href="/admin.php?page=<?= $page+1 ?>&amp;q=<?= rawurlencode($search) ?>">Další →</a><?php endif; ?></nav>
-<?php elseif($view==='privacy'): ?>
-<div class="privacy-copy"><p>Správcem údajů účtu MŮJ-DIP je Jiří Janoušek. Kontakt: <a href="mailto:info@jirijanousek.cz">info@jirijanousek.cz</a>.</p><h3>Jaké údaje a proč</h3><p>Pro registraci, přihlášení, správu profilu a související podporu zpracováváme jméno, příjmení, e-mail, telefon, adresu a případně firmu, IČ a DIČ. Heslo ukládáme pouze jako jednosměrný hash. Údaje účtu nepoužíváme automaticky k marketingu.</p><p>Zajištění požadovaného účtu vychází z plnění služby na vaši žádost. Zabezpečení, omezení zneužití a technické záznamy vycházejí z oprávněného zájmu na bezpečném provozu. Používáme nezbytnou relační cookie pro přihlášení a ochranu formulářů.</p><h3>Uložení a příjemci</h3><p>Údaje jsou uloženy na hostingu aplikace, odděleně od veřejných souborů. Hostitel a poskytovatel e-mailové infrastruktury je mohou zpracovávat v rozsahu nezbytném pro provoz a doručení servisních zpráv. Údaje vedeme po dobu existence účtu; po žádosti o zrušení je odstraníme, pokud další uchování nevyžaduje právní povinnost nebo ochrana právních nároků. Krátkodobé bezpečnostní limity expirují automaticky.</p><h3>Vaše práva</h3><p>Můžete požádat o přístup, opravu, výmaz, omezení zpracování, případně přenositelnost, a vznést námitku v případech stanovených právními předpisy. Napište na uvedený e-mail; před vyřízením ověříme totožnost. Máte právo podat stížnost Úřadu pro ochranu osobních údajů.</p><p>Investiční výpočty probíhají v prohlížeči a registrací se na server nesynchronizují. Jejich místní uložení odstraníte funkcí „Vymazat uložený plán“ v kalkulačce. <a href="https://jirijanousek.cz/ochrana-osobnich-udaju/" target="_blank" rel="noopener">Další informace o zpracování údajů</a>.</p></div><p class="form-links"><a href="/account.php?view=login">Přihlášení</a> · <a href="/account.php?view=register">Registrace</a></p>
-<?php endif; ?>
-<div class="footer-support"><a class="footer-support-button" href="/support.php"><span aria-hidden="true">💛</span> Podpořit Můj DIP</a><p>Pomozte rozvíjet aplikaci dobrovolným příspěvkem.</p></div><nav class="footer-legal" aria-label="Právní informace"><a href="/legal.php?view=terms">Podmínky používání</a><a href="/legal.php?view=legal">Právní upozornění</a><a href="/legal.php?view=privacy">Ochrana údajů / GDPR</a><a href="/legal.php?view=cookies">Cookies</a><button type="button" data-cookie-settings>Nastavení cookies</button></nav><p class="account-footer">© <?= date('Y') ?> Jiří Janoušek · <a href="https://jirijanousek.cz/" target="_blank" rel="noopener noreferrer">jirijanousek.cz ↗</a></p></section></main></body></html>
-
-
+auth_boot();$error='';$user=null;
+try{
+ $user=auth_user();
+ if(($_SERVER['REQUEST_METHOD']??'GET')==='POST')auth_process($user);
+}catch(DomainException $e){$error=$e->getMessage();}
+catch(Throwable $e){http_response_code(503);$error='Přihlášení je dočasně nedostupné.';error_log('Private account failed: '.get_class($e));}
+$requested=is_string($_GET['view']??null)?$_GET['view']:'login';
+if(!in_array($requested,['login','profile'],true)){http_response_code(404);exit('Stránka není dostupná.');}
+?><!doctype html><html lang="cs"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow,noarchive"><title>Soukromý vstup</title><style>body{font:17px system-ui;background:#f5f7f6;color:#20352e;margin:0;padding:24px}main{max-width:370px;margin:12vh auto;background:white;padding:32px;border-radius:18px}h1{font-size:25px}input,button{box-sizing:border-box;width:100%;font:inherit;padding:12px;margin:8px 0 18px;border:1px solid #b6c6bd;border-radius:8px}button{background:#176b50;color:white;border:0;cursor:pointer}.error{color:#a31e1e}a{color:#176b50}</style></head><body><main><h1>🔐 Soukromý vstup</h1>
+<?php if($error!==''):?><p class="error" role="alert"><?=h($error)?></p><?php endif;?>
+<?php if($user):?><p>Jste přihlášený.</p><p><a href="/">Vstoupit do aplikace →</a></p><form method="post" action="/account.php?view=login"><input type="hidden" name="csrf" value="<?=h($_SESSION['csrf'])?>"><button name="action" value="logout">Odhlásit se</button></form>
+<?php else:?><p>Přístup pouze pro vlastníka.</p><form method="post" action="/account.php?view=login"><input type="hidden" name="csrf" value="<?=h($_SESSION['csrf'])?>"><input type="hidden" name="action" value="login"><label for="email">E-mail</label><input id="email" name="email" type="email" autocomplete="username" maxlength="254" required><label for="password">Heslo</label><input id="password" name="password" type="password" autocomplete="current-password" maxlength="72" required><button>Přihlásit se</button></form><?php endif;?></main></body></html>
