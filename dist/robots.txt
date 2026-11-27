@@ -1,2 +1,4 @@
+# Allow crawlers to see the site-wide X-Robots-Tag: noindex header.
+# Blocking crawling here would prevent removal of previously indexed URLs.
 User-agent: *
-Disallow: /
+Disallow:
